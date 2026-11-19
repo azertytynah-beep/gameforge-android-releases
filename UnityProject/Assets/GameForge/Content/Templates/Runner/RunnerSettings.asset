@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2386587a8848b1d488fecb22b53835db, type: 3}
+  m_Name: RunnerSettings
+  m_EditorClassIdentifier: GameForge.Runtime::GameForge.Runtime.RunnerSettings
+  configuration:
+    schemaVersion: 1
+    templateId: runner-3d
+    title: Endless Runner
+    seed: 0
+    initialSpeed: 6
+    maxSpeed: 12
+    acceleration: 0.15
+    obstacleDensity: 1
+    themeId: theme-default
+    obstacleIds:
+    - obstacle-block
