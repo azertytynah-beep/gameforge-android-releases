@@ -2,13 +2,11 @@
 
 ## Installer le test Android
 
-1. Sur le Redmi, [télécharge l’APK de test](https://github.com/azertytynah-beep/gameforge-android-releases/releases/latest/download/gameforge-android-test.apk).
-2. Ouvre le fichier téléchargé. Si Android le demande, autorise temporairement ton navigateur à installer cette application, puis confirme l’installation.
-3. Ouvre **GameForge AI**. La première version affiche un écran de validation de la chaîne Android. Le Runner jouable viendra dans une prochaine publication.
+1. Sur le Redmi, [télécharge le ZIP du Runner](https://github.com/azertytynah-beep/gameforge-android-releases/releases/latest/download/gameforge-runner-android.zip).
+2. Dans le gestionnaire de fichiers, extrais le ZIP puis ouvre `gameforge-runner.apk` et confirme l’installation.
+3. Ouvre **GameForge Runner** et appuie sur **Jouer**. Le Runner s’installe à côté du premier test Android au fond bleu.
 
-Si le téléchargement direct reste bloqué, télécharge l’archive ZIP dans la publication, ouvre-la depuis le gestionnaire de fichiers du téléphone, puis extrais et ouvre l’APK. [Archive ZIP de la version de validation](https://github.com/azertytynah-beep/gameforge-android-releases/releases/download/android-test-v0.1.0/gameforge-android-test.zip)
-
-Le même lien télécharge la dernière version publiée. Pour les versions et leurs notes, consulte [les publications GitHub](https://github.com/azertytynah-beep/gameforge-android-releases/releases). Dès qu’une série utilise le même identifiant et la même signature, Android peut installer une version plus récente par-dessus la précédente.
+Le ZIP suit la dernière publication du Runner. Chaque version propose également l’APK seul. [Versions et notes de publication sur GitHub](https://github.com/azertytynah-beep/gameforge-android-releases/releases)
 
 ## Ouvrir le projet Unity
 
