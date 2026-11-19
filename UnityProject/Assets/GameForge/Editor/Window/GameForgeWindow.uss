@@ -1,0 +1,381 @@
+.gameforge-workspace {
+    --gameforge-background: #dbe8f7;
+    --gameforge-surface: rgba(249, 253, 255, 0.87);
+    --gameforge-inset: rgba(217, 233, 250, 0.78);
+    --gameforge-field: #f7fbff;
+    --gameforge-border: #b6c9e4;
+    --gameforge-rim: #ffffff;
+    --gameforge-text: #172849;
+    --gameforge-muted: #435878;
+    --gameforge-accent: #244d9f;
+    --gameforge-accent-text: #ffffff;
+    --gameforge-focus: #255fbc;
+    --gameforge-hover: rgba(112, 158, 226, 0.20);
+    --gameforge-lens-body: rgba(242, 250, 255, 0.93);
+    --gameforge-lens-rim: #a6c0e5;
+    --gameforge-glint: rgba(255, 255, 255, 0.95);
+    --gameforge-shadow-edge: #a9bedc;
+    --gameforge-stage: #21365b;
+    flex-grow: 1;
+    min-height: 0;
+    padding: 18px;
+}
+
+.gameforge-workspace--dark {
+    --gameforge-background: #101a30;
+    --gameforge-surface: rgba(32, 49, 78, 0.91);
+    --gameforge-inset: rgba(39, 59, 91, 0.80);
+    --gameforge-field: #162640;
+    --gameforge-border: #465f84;
+    --gameforge-rim: #607caa;
+    --gameforge-text: #eef5ff;
+    --gameforge-muted: #becce5;
+    --gameforge-accent: #afceff;
+    --gameforge-accent-text: #12264c;
+    --gameforge-focus: #9bcaff;
+    --gameforge-hover: rgba(121, 168, 246, 0.22);
+    --gameforge-lens-body: rgba(65, 93, 135, 0.94);
+    --gameforge-lens-rim: #7597c9;
+    --gameforge-glint: rgba(182, 216, 255, 0.46);
+    --gameforge-shadow-edge: #0a1327;
+    --gameforge-stage: #101b33;
+}
+
+.gameforge-workspace--light,
+.gameforge-workspace--dark {
+    background-color: var(--gameforge-background);
+    color: var(--gameforge-text);
+}
+
+.gameforge-workspace .unity-label,
+.gameforge-workspace .unity-base-field__label,
+.gameforge-workspace .unity-help-box__label {
+    color: var(--gameforge-text);
+}
+
+.gameforge-workspace .unity-base-field__label {
+    color: var(--gameforge-muted);
+}
+
+.gameforge-workspace .unity-button,
+.gameforge-workspace .unity-base-text-field__input,
+.gameforge-workspace .unity-base-popup-field__input {
+    background-color: var(--gameforge-field);
+    border-color: var(--gameforge-border);
+    border-radius: 8px;
+    border-width: 1px;
+    color: var(--gameforge-text);
+    min-height: 24px;
+}
+
+.gameforge-workspace .unity-base-popup-field__text {
+    color: var(--gameforge-text);
+}
+
+.gameforge-workspace .unity-base-text-field__input {
+    --unity-selection-color: rgba(98, 158, 243, 0.36);
+}
+
+.gameforge-workspace .unity-base-popup-field__arrow {
+    -unity-background-image-tint-color: var(--gameforge-muted);
+}
+
+.gameforge-workspace .unity-button:hover,
+.gameforge-workspace .unity-base-popup-field__input:hover {
+    background-color: var(--gameforge-inset);
+}
+
+.gameforge-workspace .unity-button:focus,
+.gameforge-workspace .unity-base-text-field__input:focus,
+.gameforge-workspace .unity-base-popup-field:focus .unity-base-popup-field__input {
+    border-color: var(--gameforge-focus);
+}
+
+.gameforge-workspace .unity-help-box {
+    background-color: var(--gameforge-inset);
+    border-color: var(--gameforge-border);
+    border-radius: 8px;
+}
+
+.gameforge-workspace .unity-collection-view__item--selected {
+    background-color: var(--gameforge-hover);
+}
+
+.gameforge-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    min-height: 56px;
+    margin-bottom: 10px;
+}
+
+.gameforge-brand {
+    align-items: center;
+    flex-direction: row;
+    flex-shrink: 1;
+    min-width: 0;
+    font-size: 23px;
+    -unity-font-style: bold;
+}
+
+.gameforge-workspace .gameforge-logo {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    margin-right: 9px;
+    border-width: 1px;
+    border-color: var(--gameforge-border);
+    border-top-color: var(--gameforge-rim);
+    border-radius: 13px;
+    background-color: var(--gameforge-accent);
+    color: var(--gameforge-accent-text);
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.gameforge-appearance {
+    align-self: center;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.gameforge-appearance .unity-base-field__label {
+    min-width: 0;
+    flex-grow: 0;
+    margin-right: 6px;
+}
+
+.gameforge-appearance .unity-base-popup-field__input {
+    min-width: 68px;
+}
+
+.gameforge-steps {
+    position: relative;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    flex-shrink: 0;
+    min-height: 48px;
+    margin-bottom: 15px;
+    padding: 4px;
+    background-color: var(--gameforge-inset);
+    border-width: 1px;
+    border-color: var(--gameforge-border);
+    border-top-color: var(--gameforge-rim);
+    border-bottom-color: var(--gameforge-shadow-edge);
+    border-bottom-width: 3px;
+    border-radius: 22px;
+}
+
+.gameforge-workspace .gameforge-step {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 35px;
+    margin: 0 2px;
+    padding: 0 5px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 17px;
+    color: var(--gameforge-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -unity-text-align: middle-center;
+}
+
+.gameforge-workspace .gameforge-step:hover {
+    background-color: var(--gameforge-hover);
+}
+
+.gameforge-workspace .gameforge-step:focus {
+    border-color: var(--gameforge-focus);
+}
+
+.gameforge-workspace .gameforge-step--active {
+    color: var(--gameforge-text);
+    -unity-font-style: bold;
+}
+
+.gameforge-lens {
+    position: absolute;
+    background-color: var(--gameforge-lens-body);
+    border-width: 1px;
+    border-color: var(--gameforge-lens-rim);
+    border-top-color: var(--gameforge-rim);
+    border-bottom-width: 2px;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.gameforge-lens-glint {
+    position: absolute;
+    top: 2px;
+    height: 8px;
+    border-radius: 8px;
+    background-color: var(--gameforge-glint);
+}
+
+.gameforge-body {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 0;
+}
+
+.gameforge-content {
+    flex-grow: 11;
+    flex-basis: 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.gameforge-workspace .gameforge-eyebrow {
+    color: var(--gameforge-muted);
+    font-size: 11px;
+    -unity-font-style: bold;
+}
+
+.gameforge-workspace .gameforge-heading {
+    color: var(--gameforge-text);
+    font-size: 24px;
+    -unity-font-style: bold;
+    white-space: normal;
+    margin: 3px 0 8px;
+}
+
+.gameforge-card,
+.gameforge-preview {
+    background-color: var(--gameforge-surface);
+    border-width: 1px;
+    border-color: var(--gameforge-border);
+    border-top-color: var(--gameforge-rim);
+    border-radius: 18px;
+    padding: 12px;
+    min-height: 0;
+}
+
+.gameforge-content > .gameforge-card {
+    flex-grow: 1;
+}
+
+.gameforge-content > .gameforge-card--actions {
+    flex-grow: 0;
+}
+
+.gameforge-card--actions > .unity-button {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
+.gameforge-preview {
+    flex-grow: 9;
+    flex-basis: 0;
+    min-width: 0;
+    margin-left: 12px;
+}
+
+.gameforge-workspace .gameforge-preview-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.gameforge-workspace .gameforge-caption {
+    color: var(--gameforge-muted);
+    white-space: normal;
+    margin-bottom: 8px;
+}
+
+.gameforge-preview-stage {
+    flex-grow: 1;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 0 8px;
+    background-color: var(--gameforge-stage);
+    border-width: 1px;
+    border-color: var(--gameforge-border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.gameforge-preview-image {
+    width: 100%;
+    flex-grow: 1;
+    min-height: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.gameforge-workspace .gameforge-primary {
+    min-height: 32px;
+    padding: 0 10px;
+    background-color: var(--gameforge-accent);
+    border-color: var(--gameforge-accent);
+    color: var(--gameforge-accent-text);
+    -unity-font-style: bold;
+}
+
+.gameforge-workspace .gameforge-primary:hover {
+    background-color: var(--gameforge-accent);
+    border-top-color: var(--gameforge-rim);
+}
+
+.gameforge-workspace .gameforge-primary:focus {
+    border-color: var(--gameforge-rim);
+}
+
+.gameforge-workspace .gameforge-primary:disabled {
+    background-color: var(--gameforge-inset);
+    border-color: var(--gameforge-border);
+    color: var(--gameforge-muted);
+}
+
+.gameforge-workspace .gameforge-quiet {
+    background-color: var(--gameforge-surface);
+}
+
+.gameforge-workspace--compact {
+    padding: 10px;
+}
+
+.gameforge-workspace--compact .gameforge-header {
+    min-height: 43px;
+    margin-bottom: 6px;
+}
+
+.gameforge-workspace--compact .gameforge-brand {
+    font-size: 18px;
+}
+
+.gameforge-workspace--compact .gameforge-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+}
+
+.gameforge-workspace--compact .gameforge-steps {
+    min-height: 42px;
+    margin-bottom: 8px;
+}
+
+.gameforge-workspace--compact .gameforge-step {
+    font-size: 11px;
+    min-height: 30px;
+    padding: 0 2px;
+}
+
+.gameforge-workspace--compact .gameforge-heading {
+    font-size: 20px;
+}
+
+.gameforge-workspace--compact .gameforge-card {
+    padding: 8px;
+}
+
+.gameforge-workspace--compact .gameforge-preview {
+    display: none;
+}

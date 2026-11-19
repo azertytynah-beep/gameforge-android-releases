@@ -28,6 +28,12 @@ namespace GameForge.Editor
 
         internal event Action<GenerationResult> VariantGenerated;
 
+        internal string GameTitle
+        {
+            get => title.value;
+            set => title.value = value;
+        }
+
         public RunnerConfigurationForm()
         {
             style.flexGrow = 1f;

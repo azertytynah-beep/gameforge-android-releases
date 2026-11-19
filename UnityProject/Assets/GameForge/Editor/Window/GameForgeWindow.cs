@@ -1,8 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GameForge.Runtime;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,10 +10,30 @@ namespace GameForge.Editor
 {
     public sealed class GameForgeWindow : EditorWindow
     {
+        private enum Step { Describe, Adjust, Variants, Export }
+
+        internal const string AppearanceKey = "GameForge.WorkspaceAppearance";
+        private const string WindowAssets = "Assets/GameForge/Editor/Window/";
+        private static readonly string[] Steps = { "Décrire", "Ajuster", "Variantes", "Exporter" };
+        private static readonly string[] Headings = { "Décris ton jeu", "Ajuste les réglages", "Tes variantes", "Exporter sur Android" };
+        private static readonly string[] Appearances = { "Unity", "Clair", "Sombre" };
+
+        [SerializeField] private Step activeStep;
+
         private RunnerConfigurationForm form;
         private VariantPanel variants;
         private bool customBinding;
-        [SerializeField] private bool showingVariants;
+        private VisualElement workspace;
+        private GameForgeSteps navigation;
+        private VisualElement[] pages;
+        private Label heading;
+        private TextField gameName;
+        private Label exportVariant;
+        private Button exportButton;
+        private Button revealExport;
+        private HelpBox exportStatus;
+        private string selectedExportId;
+        private string exportedApk;
 
         [MenuItem("Tools/GameForge")]
         public static void Open() => GetWindow<GameForgeWindow>("GameForge");
@@ -32,19 +52,42 @@ namespace GameForge.Editor
             variants = new VariantPanel(store, catalog, generator, configuration =>
             {
                 form.Load(configuration);
-                ShowVariants(false);
+                ShowStep(Step.Adjust);
             });
+            variants.AddToClassList("gameforge-card");
+            form.AddToClassList("gameforge-card");
+            var generate = form.Q<Button>("generate");
+            generate.text = "Générer la variante";
+            generate.AddToClassList("gameforge-primary");
             form.VariantGenerated -= OnGenerated;
             form.VariantGenerated += OnGenerated;
 
-            var tabs = new Toolbar();
-            tabs.Add(new ToolbarButton(() => ShowVariants(false)) { text = "Configuration" });
-            tabs.Add(new ToolbarButton(() => ShowVariants(true)) { text = "Variantes" });
+            workspace = Element("gameforge-workspace");
+            workspace.name = "gameforge-workspace";
+            var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(WindowAssets + "GameForgeWindow.uss");
+            if (sheet != null)
+                workspace.styleSheets.Add(sheet);
+            workspace.RegisterCallback<GeometryChangedEvent>(change =>
+                workspace.EnableInClassList("gameforge-workspace--compact", change.newRect.width < 710f));
+
+            workspace.Add(CreateHeader());
+            navigation = new GameForgeSteps(Steps, index => ShowStep((Step)index));
+            workspace.Add(navigation);
+            var body = Element("gameforge-body");
+            var content = Element("gameforge-content");
+            heading = Text("", "gameforge-heading");
+            content.Add(Text("Endless Runner 3D", "gameforge-eyebrow"));
+            content.Add(heading);
+            pages = new[] { CreateDescription(), form, variants, CreateExport() };
+            variants.SelectionChanged += RefreshExportSelection;
+            foreach (var page in pages)
+                content.Add(page);
+            body.Add(content);
+            body.Add(CreatePreview());
+            workspace.Add(body);
             rootVisualElement.Clear();
-            rootVisualElement.Add(tabs);
-            rootVisualElement.Add(form);
-            rootVisualElement.Add(variants);
-            ShowVariants(showingVariants);
+            rootVisualElement.Add(workspace);
+            ShowStep(activeStep);
             UpdateAvailability();
         }
 
@@ -56,30 +99,182 @@ namespace GameForge.Editor
             form.Bind(catalog, themeIds, obstacleIds, generator);
         }
 
+        private VisualElement CreateHeader()
+        {
+            var header = Element("gameforge-header");
+            var brand = Element("gameforge-brand");
+            brand.Add(Text("GF", "gameforge-logo"));
+            brand.Add(new Label("GameForge AI"));
+
+            var selected = Array.IndexOf(Appearances, EditorPrefs.GetString(AppearanceKey, Appearances[0]));
+            var appearance = new DropdownField("Apparence", Appearances.ToList(), Mathf.Max(selected, 0))
+            {
+                name = "gameforge-appearance"
+            };
+            appearance.AddToClassList("gameforge-appearance");
+            appearance.RegisterValueChangedCallback(change =>
+            {
+                EditorPrefs.SetString(AppearanceKey, change.newValue);
+                ApplyAppearance(change.newValue);
+            });
+            ApplyAppearance(appearance.value);
+
+            header.Add(brand);
+            header.Add(appearance);
+            return header;
+        }
+
+        private void ApplyAppearance(string appearance)
+        {
+            bool dark = appearance == "Sombre" || (appearance == "Unity" && EditorGUIUtility.isProSkin);
+            workspace.EnableInClassList("gameforge-workspace--dark", dark);
+            workspace.EnableInClassList("gameforge-workspace--light", !dark);
+        }
+
+        private VisualElement CreateDescription()
+        {
+            var card = Element("gameforge-card");
+            card.AddToClassList("gameforge-card--actions");
+            gameName = new TextField("Nom du jeu") { name = "gameforge-game-name", maxLength = RunnerConfigValidator.MaxTitleLength };
+            gameName.RegisterValueChangedCallback(change => form.GameTitle = change.newValue);
+            card.Add(gameName);
+            card.Add(StyledButton("gameforge-next", "Ajuster les réglages", "gameforge-primary", () => ShowStep(Step.Adjust)));
+            return card;
+        }
+
+        private static VisualElement CreatePreview()
+        {
+            var preview = Element("gameforge-preview");
+            preview.Add(Text("Aperçu du modèle", "gameforge-preview-title"));
+            var stage = Element("gameforge-preview-stage");
+            var image = new Image
+            {
+                image = AssetDatabase.LoadAssetAtPath<Texture2D>(WindowAssets + "RunnerPreview.png"),
+                scaleMode = ScaleMode.ScaleToFit
+            };
+            image.AddToClassList("gameforge-preview-image");
+            stage.Add(image);
+            preview.Add(stage);
+            preview.Add(Text("Android · Portrait · 3 voies", "gameforge-caption"));
+            return preview;
+        }
+
+        private VisualElement CreateExport()
+        {
+            var card = Element("gameforge-card");
+            card.AddToClassList("gameforge-card--actions");
+            card.Add(Text("APK de test", "gameforge-preview-title"));
+            exportVariant = Text("", "gameforge-caption");
+            exportVariant.name = "gameforge-export-variant";
+            card.Add(exportVariant);
+            exportButton = StyledButton("gameforge-export-apk", "Exporter l’APK", "gameforge-primary", ExportApk);
+            card.Add(exportButton);
+            revealExport = StyledButton("gameforge-reveal-apk", "Afficher le fichier", "gameforge-quiet",
+                () => EditorUtility.RevealInFinder(exportedApk));
+            card.Add(revealExport);
+            exportStatus = new HelpBox("", HelpBoxMessageType.Info);
+            card.Add(exportStatus);
+            selectedExportId = null;
+            exportedApk = null;
+            ShowExportStatus();
+            return card;
+        }
+
+        private void RefreshExportSelection()
+        {
+            var variant = variants.Selected;
+            if (selectedExportId != variant?.Id)
+            {
+                selectedExportId = variant?.Id;
+                exportedApk = null;
+                ShowExportStatus();
+            }
+            exportVariant.text = variant?.Manifest.title ?? "Sélectionne une variante dans l’onglet Variantes.";
+            exportButton.SetEnabled(variant != null);
+        }
+
+        private void ExportApk()
+        {
+            var variant = variants.Selected;
+            if (variant == null)
+                return;
+
+            exportedApk = null;
+            try
+            {
+                var report = AndroidApkExport.Export(variant.Id);
+                exportedApk = report.ApkPath;
+                ShowExportStatus("APK exporté pour " + variant.Manifest.title + ".");
+            }
+            catch (OperationCanceledException)
+            {
+                ShowExportStatus("Export annulé.");
+            }
+            catch (Exception exception)
+            {
+                ShowExportStatus(exception.Message, HelpBoxMessageType.Error);
+            }
+        }
+
+        private void ShowExportStatus(string message = "", HelpBoxMessageType type = HelpBoxMessageType.Info)
+        {
+            exportStatus.text = message;
+            exportStatus.messageType = type;
+            exportStatus.style.display = message.Length == 0 ? DisplayStyle.None : DisplayStyle.Flex;
+            revealExport.style.display = exportedApk == null ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
         private void OnEnable() => EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-
         private void OnDisable() => EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-
         private void OnPlayModeStateChanged(PlayModeStateChange change) => UpdateAvailability();
 
         private void UpdateAvailability()
         {
+            if (pages == null)
+                return;
             bool available = !EditorApplication.isPlayingOrWillChangePlaymode;
-            form?.SetEnabled(available);
-            variants?.SetEnabled(available);
+            foreach (var page in pages)
+                page.SetEnabled(available);
         }
 
         private void OnGenerated(GenerationResult result)
         {
             variants.Refresh(result.VariantId);
-            ShowVariants(true);
+            ShowStep(Step.Variants);
         }
 
-        private void ShowVariants(bool show)
+        private void ShowStep(Step step)
         {
-            showingVariants = show;
-            variants.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
-            form.style.display = show ? DisplayStyle.None : DisplayStyle.Flex;
+            activeStep = step;
+            navigation.SetActive((int)step);
+            heading.text = Headings[(int)step];
+            for (int i = 0; i < pages.Length; i++)
+                pages[i].style.display = i == (int)step ? DisplayStyle.Flex : DisplayStyle.None;
+            if (step == Step.Describe)
+                gameName.SetValueWithoutNotify(form.GameTitle);
+            if (step == Step.Export)
+                RefreshExportSelection();
+        }
+
+        private static VisualElement Element(string style)
+        {
+            var element = new VisualElement();
+            element.AddToClassList(style);
+            return element;
+        }
+
+        private static Label Text(string value, string style)
+        {
+            var label = new Label(value);
+            label.AddToClassList(style);
+            return label;
+        }
+
+        private static Button StyledButton(string name, string label, string style, Action click)
+        {
+            var button = new Button(click) { name = name, text = label };
+            button.AddToClassList(style);
+            return button;
         }
     }
 }

@@ -23,6 +23,9 @@ namespace GameForge.Editor
         private readonly TextField displayTitle = new TextField("Titre affiché") { name = "variant-title" };
         private readonly TextField backupId = new TextField("Sauvegarde à restaurer") { name = "variant-backup-id" };
 
+        internal StoredVariant Selected => list.selectedItem as StoredVariant;
+        internal event Action SelectionChanged;
+
         public VariantPanel(GenerationStore store, RunnerCatalog catalog, RunnerGenerator generator,
             Action<RunnerConfigV1> load)
         {
@@ -130,11 +133,12 @@ namespace GameForge.Editor
 
         private void ShowSelection()
         {
-            var current = list.selectedItem as StoredVariant;
+            var current = Selected;
             actions.SetEnabled(current != null);
             displayTitle.SetValueWithoutNotify(current?.Manifest.title ?? string.Empty);
             if (current != null)
                 SessionState.SetString(SelectionSessionKey, current.Id);
+            SelectionChanged?.Invoke();
         }
 
         private void Open(bool preview)

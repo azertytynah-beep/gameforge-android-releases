@@ -15,6 +15,8 @@ namespace GameForge.Tests.EditMode.Workflow
 {
     public sealed class VariantWorkflowTests
     {
+        private const string AppearancePreference = "GameForge.WorkspaceAppearance";
+
         [UnityTest]
         public IEnumerator GameForgeWindowGeneratesOpensSavesAndRestoresAnEditedVariant()
         {
@@ -39,15 +41,31 @@ namespace GameForge.Tests.EditMode.Workflow
             try
             {
                 window.CreateGUI();
+                CheckAppearance(window);
+
+                Click(window, "gameforge-step-2");
                 var form = window.rootVisualElement.Q<RunnerConfigurationForm>();
                 var list = window.rootVisualElement.Q<ListView>("published-variants");
+                list.ClearSelection();
+                Click(window, "gameforge-step-3");
+                Assert.That(window.rootVisualElement.Q<Button>("gameforge-export-apk").enabledInHierarchy, Is.False);
+
                 const string title = "Parcours GameForge";
-                form.Q<TextField>("title").value = title;
+                Click(window, "gameforge-step-0");
+                window.rootVisualElement.Q<TextField>("gameforge-game-name").value = title;
+                Click(window, "gameforge-next");
+                Assert.That(window.rootVisualElement.Q<Button>("gameforge-step-1")
+                    .ClassListContains("gameforge-step--active"), Is.True);
+                Assert.That(form.Q<TextField>("title").value, Is.EqualTo(title));
                 Click(window, "generate");
                 generated = list.selectedItem as StoredVariant;
                 Assert.That(generated?.Manifest.title, Is.EqualTo(title));
-                Assert.That(window.rootVisualElement.Q("variant-panel").style.display.value, Is.EqualTo(DisplayStyle.Flex));
-
+                Assert.That(window.rootVisualElement.Q<Button>("gameforge-step-2")
+                    .ClassListContains("gameforge-step--active"), Is.True);
+                Click(window, "gameforge-step-3");
+                Assert.That(window.rootVisualElement.Q<TextElement>("gameforge-export-variant").text, Does.Contain(title));
+                Assert.That(window.rootVisualElement.Q<Button>("gameforge-export-apk").enabledInHierarchy, Is.True);
+                Click(window, "gameforge-step-2");
                 Click(window, "open-variant");
                 var scene = SceneManager.GetActiveScene();
                 Assert.That(scene.path, Is.EqualTo(generated.ScenePath));
@@ -141,11 +159,42 @@ namespace GameForge.Tests.EditMode.Workflow
             }
         }
 
+        private static void CheckAppearance(GameForgeWindow window)
+        {
+            var root = window.rootVisualElement;
+            var workspace = root.Q("gameforge-workspace");
+            var appearance = root.Q<DropdownField>("gameforge-appearance");
+            Assert.That(appearance.choices, Is.EqualTo(new[] { "Unity", "Clair", "Sombre" }));
+            var initial = appearance.value;
+            var hadPreference = EditorPrefs.HasKey(AppearancePreference);
+            var originalPreference = EditorPrefs.GetString(AppearancePreference);
+            try
+            {
+                appearance.value = "Clair";
+                Assert.That(workspace.ClassListContains("gameforge-workspace--light"), Is.True);
+                Assert.That(workspace.ClassListContains("gameforge-workspace--dark"), Is.False);
+                appearance.value = "Sombre";
+                Assert.That(workspace.ClassListContains("gameforge-workspace--dark"), Is.True);
+                Assert.That(workspace.ClassListContains("gameforge-workspace--light"), Is.False);
+                Assert.That(EditorPrefs.GetString(AppearancePreference), Is.EqualTo("Sombre"));
+            }
+            finally
+            {
+                appearance.value = initial;
+                if (hadPreference)
+                    EditorPrefs.SetString(AppearancePreference, originalPreference);
+                else
+                    EditorPrefs.DeleteKey(AppearancePreference);
+            }
+        }
+
         private static void Click(GameForgeWindow window, string name)
         {
             var button = window.rootVisualElement.Q<Button>(name);
             Assert.That(button, Is.Not.Null, name);
             Assert.That(button.enabledInHierarchy, Is.True, name);
+            for (var element = (VisualElement)button; element != null; element = element.parent)
+                Assert.That(element.style.display.value, Is.Not.EqualTo(DisplayStyle.None), name);
             using var submit = NavigationSubmitEvent.GetPooled();
             submit.target = button;
             button.SendEvent(submit);
