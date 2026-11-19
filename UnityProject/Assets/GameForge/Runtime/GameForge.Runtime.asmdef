@@ -1,0 +1,8 @@
+{
+  "name": "GameForge.Runtime",
+  "rootNamespace": "GameForge.Runtime",
+  "references": [
+    "Unity.InputSystem",
+    "UnityEngine.UI"
+  ]
+}

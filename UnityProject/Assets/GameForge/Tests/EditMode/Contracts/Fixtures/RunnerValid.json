@@ -1,0 +1,1 @@
+{"schemaVersion":1,"templateId":"runner-3d","title":"Endless Runner","seed":0,"initialSpeed":6,"maxSpeed":12,"acceleration":0.15,"obstacleDensity":1,"themeId":"theme-default","obstacleIds":["obstacle-block"]}

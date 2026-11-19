@@ -1,0 +1,10 @@
+{
+  "name": "GameForge.Editor",
+  "rootNamespace": "GameForge.Editor",
+  "references": [
+    "GameForge.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

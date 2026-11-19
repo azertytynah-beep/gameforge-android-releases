@@ -1,0 +1,14 @@
+{
+  "name": "GameForge.Tests.PlayMode",
+  "rootNamespace": "GameForge.Tests.PlayMode",
+  "references": [
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.InputSystem",
+    "GameForge.Runtime",
+    "UnityEngine.UI"
+  ],
+  "autoReferenced": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

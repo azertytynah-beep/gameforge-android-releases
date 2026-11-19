@@ -1,0 +1,16 @@
+{
+  "name": "GameForge.Tests.EditMode",
+  "rootNamespace": "GameForge.Tests.EditMode",
+  "references": [
+    "Unity.RenderPipelines.Universal.Runtime",
+    "GameForge.Runtime",
+    "GameForge.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

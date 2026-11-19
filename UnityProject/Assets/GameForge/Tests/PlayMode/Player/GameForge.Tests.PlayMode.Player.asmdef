@@ -1,0 +1,7 @@
+{
+  "name": "GameForge.Tests.PlayMode.Player",
+  "rootNamespace": "GameForge.Tests.PlayMode.Player",
+  "references": ["GameForge.Runtime"],
+  "autoReferenced": false,
+  "optionalUnityReferences": ["TestAssemblies"]
+}
