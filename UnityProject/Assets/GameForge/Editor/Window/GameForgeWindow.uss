@@ -379,3 +379,81 @@
 .gameforge-workspace--compact .gameforge-preview {
     display: none;
 }
+
+.gameforge-project-panel,
+.gameforge-project-page {
+    flex-grow: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+.gameforge-project-header,
+.gameforge-project-actions,
+.gameforge-project-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.gameforge-project-header {
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.gameforge-workspace .gameforge-project-steps .gameforge-step:disabled {
+    opacity: 1;
+    color: var(--gameforge-muted);
+}
+
+.gameforge-project-page .unity-button {
+    white-space: normal;
+    margin-bottom: 5px;
+}
+
+.gameforge-project-idea .unity-base-text-field__input {
+    min-height: 64px;
+}
+
+.gameforge-project-tile-wrap {
+    width: 50%;
+    min-width: 0;
+    padding: 4px;
+}
+
+.gameforge-project-tile {
+    flex-grow: 1;
+    min-width: 0;
+    margin-bottom: 6px;
+    padding: 9px;
+    background-color: var(--gameforge-surface);
+    border-color: var(--gameforge-border);
+    border-top-color: var(--gameforge-rim);
+    border-radius: 12px;
+    border-width: 1px;
+}
+
+.gameforge-workspace .gameforge-project-choice--selected {
+    background-color: var(--gameforge-inset);
+    border-color: var(--gameforge-focus);
+}
+
+.gameforge-project-thumbnail {
+    height: 102px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.gameforge-workspace--compact .gameforge-project-tile-wrap {
+    width: 100%;
+}
+
+.gameforge-workspace--compact .gameforge-project-steps {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+
+.gameforge-workspace--compact .gameforge-project-steps .gameforge-step {
+    min-width: 94px;
+    height: 30px;
+}

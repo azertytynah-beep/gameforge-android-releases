@@ -110,6 +110,26 @@ namespace GameForge.Tests.EditMode.Window
         }
 
         [Test]
+        public void EditingLoadedVariantKeepsItsPaletteAndObjective()
+        {
+            var (form, generator) = CreateBoundForm();
+            var settings = RunnerConfigV1.CreateDefault();
+            settings.skyColor = "#112233";
+            settings.trackColor = "#224433";
+            settings.objective = RunnerObjective.Endurance;
+            settings.timeLimitSeconds = 45;
+            form.Load(settings);
+            form.Q<TextField>("seed").value = "123";
+
+            Assert.That(form.TryGenerate(), Is.True);
+            Assert.That(generator.Configuration.seed, Is.EqualTo(123));
+            Assert.That(generator.Configuration.skyColor, Is.EqualTo(settings.skyColor));
+            Assert.That(generator.Configuration.trackColor, Is.EqualTo(settings.trackColor));
+            Assert.That(generator.Configuration.objective, Is.EqualTo(settings.objective));
+            Assert.That(generator.Configuration.timeLimitSeconds, Is.EqualTo(45));
+        }
+
+        [Test]
         public void GeneratorFailureIsShownWithoutLosingTheForm()
         {
             var (form, generator) = CreateBoundForm();

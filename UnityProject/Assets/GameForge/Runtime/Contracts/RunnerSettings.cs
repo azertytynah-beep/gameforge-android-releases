@@ -15,6 +15,13 @@ namespace GameForge.Runtime
         public int ObstacleDensity => configuration.obstacleDensity;
         public string ThemeId => configuration.themeId;
         public IReadOnlyList<string> ObstacleIds => System.Array.AsReadOnly(configuration.obstacleIds);
+        public RunnerObjective Objective => configuration.objective;
+        public int GoalDistance => configuration.goalDistance;
+        public int TimeLimitSeconds => configuration.timeLimitSeconds;
+        internal Color? SkyColor => ParseColor(configuration.skyColor);
+        internal Color? TrackColor => ParseColor(configuration.trackColor);
+        internal Color? PlayerColor => ParseColor(configuration.playerColor);
+        internal Color? ObstacleColor => ParseColor(configuration.obstacleColor);
 
         internal static RunnerSettings FromValidatedConfig(RunnerConfigV1 config)
         {
@@ -24,5 +31,8 @@ namespace GameForge.Runtime
         }
 
         public RunnerConfigV1 ToConfig() => configuration.Copy();
+
+        private static Color? ParseColor(string value) =>
+            !string.IsNullOrEmpty(value) && ColorUtility.TryParseHtmlString(value, out var color) ? color : (Color?)null;
     }
 }

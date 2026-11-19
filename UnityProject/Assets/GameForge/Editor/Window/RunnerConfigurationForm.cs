@@ -25,6 +25,7 @@ namespace GameForge.Editor
         private readonly Button generate;
         private IRunnerCatalog catalog;
         private IGameGenerator generator;
+        private RunnerConfigV1 loaded = RunnerConfigV1.CreateDefault();
 
         internal event Action<GenerationResult> VariantGenerated;
 
@@ -133,6 +134,7 @@ namespace GameForge.Editor
 
         internal void Load(RunnerConfigV1 configuration)
         {
+            loaded = configuration.Copy();
             title.SetValueWithoutNotify(configuration.title);
             seed.SetValueWithoutNotify(Number(configuration.seed));
             initialSpeed.SetValueWithoutNotify(Number(configuration.initialSpeed));
@@ -172,19 +174,15 @@ namespace GameForge.Editor
         private bool Validate(out RunnerConfigV1 configuration)
         {
             var issues = new List<RunnerDiagnostic>();
-            configuration = new RunnerConfigV1
-            {
-                schemaVersion = RunnerConfigV1.Version,
-                templateId = RunnerConfigV1.RunnerTemplateId,
-                title = title.value,
-                seed = ReadInteger(seed, issues),
-                initialSpeed = ReadNumber(initialSpeed, issues),
-                maxSpeed = ReadNumber(maxSpeed, issues),
-                acceleration = ReadNumber(acceleration, issues),
-                obstacleDensity = ReadInteger(density, issues),
-                themeId = theme.value,
-                obstacleIds = SelectedObstacles()
-            };
+            configuration = loaded.Copy();
+            configuration.title = title.value;
+            configuration.seed = ReadInteger(seed, issues);
+            configuration.initialSpeed = ReadNumber(initialSpeed, issues);
+            configuration.maxSpeed = ReadNumber(maxSpeed, issues);
+            configuration.acceleration = ReadNumber(acceleration, issues);
+            configuration.obstacleDensity = ReadInteger(density, issues);
+            configuration.themeId = theme.value;
+            configuration.obstacleIds = SelectedObstacles();
 
             if (catalog != null)
             {

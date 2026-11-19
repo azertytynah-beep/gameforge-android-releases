@@ -16,7 +16,8 @@ namespace GameForge.Editor
         private static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.Ordinal)
         {
             "schemaVersion", "templateId", "title", "seed", "initialSpeed", "maxSpeed",
-            "acceleration", "obstacleDensity", "themeId", "obstacleIds"
+            "acceleration", "obstacleDensity", "themeId", "obstacleIds",
+            "skyColor", "trackColor", "playerColor", "obstacleColor", "objective", "goalDistance", "timeLimitSeconds"
         };
 
         public static bool TryParse(string json, IRunnerCatalog catalog, out RunnerConfigV1 configuration,
@@ -65,7 +66,14 @@ namespace GameForge.Editor
                 acceleration = ReadNumber(root, "acceleration", errors),
                 obstacleDensity = ReadInteger(root, "obstacleDensity", errors),
                 themeId = ReadString(root["themeId"], "themeId", errors),
-                obstacleIds = ReadObstacles(root["obstacleIds"], errors)
+                obstacleIds = ReadObstacles(root["obstacleIds"], errors),
+                skyColor = ReadOptionalString(root["skyColor"], "skyColor", errors),
+                trackColor = ReadOptionalString(root["trackColor"], "trackColor", errors),
+                playerColor = ReadOptionalString(root["playerColor"], "playerColor", errors),
+                obstacleColor = ReadOptionalString(root["obstacleColor"], "obstacleColor", errors),
+                objective = (RunnerObjective)ReadOptionalInteger(root, "objective", errors),
+                goalDistance = ReadOptionalInteger(root, "goalDistance", errors),
+                timeLimitSeconds = ReadOptionalInteger(root, "timeLimitSeconds", errors)
             };
 
             diagnostics = errors.Count == 0 ? RunnerConfigValidator.Validate(draft, catalog) : errors;
@@ -87,6 +95,9 @@ namespace GameForge.Editor
             return 0;
         }
 
+        private static int ReadOptionalInteger(JObject root, string field, List<RunnerDiagnostic> errors) =>
+            root[field] == null ? 0 : ReadInteger(root, field, errors);
+
         private static float ReadNumber(JObject root, string field, List<RunnerDiagnostic> errors)
         {
             var token = root[field];
@@ -107,6 +118,9 @@ namespace GameForge.Editor
             errors.Add(new RunnerDiagnostic(field, "Chaîne de caractères requise."));
             return null;
         }
+
+        private static string ReadOptionalString(JToken token, string field, List<RunnerDiagnostic> errors) =>
+            token == null || token.Type == JTokenType.Null ? null : ReadString(token, field, errors);
 
         private static string[] ReadObstacles(JToken token, List<RunnerDiagnostic> errors)
         {

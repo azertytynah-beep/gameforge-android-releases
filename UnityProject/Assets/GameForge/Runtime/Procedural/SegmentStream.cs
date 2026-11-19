@@ -13,6 +13,8 @@ namespace GameForge.Runtime
         private SegmentPlanner planner;
         private readonly Queue<ActiveSegment> active = new Queue<ActiveSegment>();
         private int windowSize;
+        private Color? trackTint;
+        private Color? obstacleTint;
 
         public int ActiveSegmentCount => active.Count;
         public int PooledSegmentCount => segmentPool?.Count ?? 0;
@@ -55,8 +57,8 @@ namespace GameForge.Runtime
             segmentPrefabs = tracks;
             obstaclePrefabs = props;
             this.windowSize = windowSize;
-            segmentPool = new BoundedPrefabPool(windowSize, transform);
-            obstaclePool = new BoundedPrefabPool(windowSize * 3, transform);
+            segmentPool = new BoundedPrefabPool(windowSize, transform, TintTrack);
+            obstaclePool = new BoundedPrefabPool(windowSize * 3, transform, TintObstacle);
         }
 
         public void Reset(int seed, RunnerSettings settings)
@@ -66,6 +68,14 @@ namespace GameForge.Runtime
 
             var nextPlanner = new SegmentPlanner(seed, settings, segmentPrefabs.Keys, obstaclePrefabs.Keys);
             ReleaseActive();
+            var nextTrackTint = settings.TrackColor;
+            var nextObstacleTint = settings.ObstacleColor;
+            if (!Nullable.Equals(trackTint, nextTrackTint))
+                segmentPool.Clear();
+            if (!Nullable.Equals(obstacleTint, nextObstacleTint))
+                obstaclePool.Clear();
+            trackTint = nextTrackTint;
+            obstacleTint = nextObstacleTint;
             planner = nextPlanner;
             for (int i = 0; i < windowSize; i++)
                 SpawnNext();
@@ -87,6 +97,19 @@ namespace GameForge.Runtime
         }
 
         private float StartZ(int index) => transform.position.z + index * SegmentPlanner.SegmentLength;
+
+        private void TintTrack(GameObject segment)
+        {
+            // The catalog keeps its lane markings separate from the floor.
+            if (trackTint is Color color && segment.transform.Find("Floor") is Transform floor)
+                RunnerTint.Apply(floor.gameObject, color);
+        }
+
+        private void TintObstacle(GameObject obstacle)
+        {
+            if (obstacleTint is Color color)
+                RunnerTint.Apply(obstacle, color);
+        }
 
         private void SpawnNext()
         {
@@ -152,11 +175,13 @@ namespace GameForge.Runtime
             private readonly List<PoolItem> parked = new List<PoolItem>();
             private readonly int capacity;
             private readonly Transform root;
+            private readonly Action<GameObject> initialize;
 
-            public BoundedPrefabPool(int capacity, Transform root)
+            public BoundedPrefabPool(int capacity, Transform root, Action<GameObject> initialize)
             {
                 this.capacity = capacity;
                 this.root = root;
+                this.initialize = initialize;
             }
 
             public int Count => parked.Count;
@@ -175,7 +200,10 @@ namespace GameForge.Runtime
                 }
 
                 if (instance == null)
+                {
                     instance = UnityEngine.Object.Instantiate(prefab, parent);
+                    initialize(instance);
+                }
                 else
                     instance.transform.SetParent(parent, false);
 

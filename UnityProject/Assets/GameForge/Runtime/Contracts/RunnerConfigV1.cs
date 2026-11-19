@@ -18,6 +18,10 @@ namespace GameForge.Runtime
         public int obstacleDensity;
         public string themeId;
         public string[] obstacleIds;
+        public string skyColor, trackColor, playerColor, obstacleColor;
+        public RunnerObjective objective;
+        public int goalDistance;
+        public int timeLimitSeconds;
 
         public static RunnerConfigV1 CreateDefault(string themeId = "theme-default", string obstacleId = "obstacle-block")
         {

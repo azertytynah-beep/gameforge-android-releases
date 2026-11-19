@@ -100,6 +100,28 @@ namespace GameForge.Tests.PlayMode
             Assert.That(left.Overlaps(right), Is.False);
         }
 
+        [Test]
+        public void SprintShowsItsGoalCountdownAndTimeout()
+        {
+            var config = RunnerConfigV1.CreateDefault();
+            config.objective = RunnerObjective.Sprint;
+            config.goalDistance = 100;
+            config.timeLimitSeconds = 3;
+            Assert.That(RunnerConfigValidator.TryCreateSettings(config, new FixtureCatalog(), out var sprint, out _), Is.True);
+            session.Configure(sprint);
+            Object.DestroyImmediate(settings);
+            settings = sprint;
+
+            Assert.That(Panel("Ready/Title").GetComponent<Text>().text, Does.Contain("100 m en 3 s"));
+            Click("Ready/Start");
+            Assert.That(Panel("Running/Score").GetComponent<Text>().text, Is.EqualTo("0 / 100 m · 3 s"));
+            session.Advance(3f);
+            Assert.That(Panel("Failed").activeSelf, Is.True);
+            Assert.That(Panel("Failed/Title").GetComponent<Text>().text, Is.EqualTo("TEMPS ÉCOULÉ"));
+            Click("Failed/Restart");
+            Assert.That(Panel("Running/Score").GetComponent<Text>().text, Is.EqualTo("0 / 100 m · 3 s"));
+        }
+
         private GameObject Panel(string path) => instance.transform.Find("SafeArea/" + path).gameObject;
 
         private void Click(string path)

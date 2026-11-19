@@ -8,8 +8,11 @@ namespace GameForge.Runtime
     {
         public const int MaxTitleLength = 60;
         public const int MaxObstacleTypes = 16;
+        public const int MaxGoalDistance = 100000;
+        public const int MaxTimeLimitSeconds = 3600;
 
         private static readonly Regex CatalogId = new Regex(@"\A[a-z0-9][a-z0-9-]{0,47}\z", RegexOptions.CultureInvariant);
+        private static readonly Regex HexColor = new Regex(@"\A#[0-9a-fA-F]{6}\z", RegexOptions.CultureInvariant);
 
         public static IReadOnlyList<RunnerDiagnostic> Validate(RunnerConfigV1 config, IRunnerCatalog catalog)
         {
@@ -38,6 +41,20 @@ namespace GameForge.Runtime
 
             if (!IsCatalogId(config.themeId) || !catalog.HasTheme(config.themeId))
                 errors.Add(new RunnerDiagnostic("themeId", "Thème inconnu dans le catalogue local."));
+
+            if (!Enum.IsDefined(typeof(RunnerObjective), config.objective))
+                errors.Add(new RunnerDiagnostic("objective", "Objectif de partie inconnu."));
+            if ((config.objective is RunnerObjective.Distance or RunnerObjective.Sprint) &&
+                (config.goalDistance < 1 || config.goalDistance > MaxGoalDistance))
+                errors.Add(new RunnerDiagnostic("goalDistance", $"Distance attendue entre 1 et {MaxGoalDistance} m."));
+            if ((config.objective is RunnerObjective.Sprint or RunnerObjective.Endurance) &&
+                (config.timeLimitSeconds < 1 || config.timeLimitSeconds > MaxTimeLimitSeconds))
+                errors.Add(new RunnerDiagnostic("timeLimitSeconds", $"Durée attendue entre 1 et {MaxTimeLimitSeconds} s."));
+
+            ValidateColor(config.skyColor, "skyColor", errors);
+            ValidateColor(config.trackColor, "trackColor", errors);
+            ValidateColor(config.playerColor, "playerColor", errors);
+            ValidateColor(config.obstacleColor, "obstacleColor", errors);
 
             var obstacles = config.obstacleIds;
             if (obstacles == null || obstacles.Length > MaxObstacleTypes || (config.obstacleDensity > 0 && obstacles.Length == 0))
@@ -68,5 +85,11 @@ namespace GameForge.Runtime
         private static bool Within(float value, float min, float max) => value >= min && value <= max;
 
         private static bool IsCatalogId(string value) => value != null && value.Length <= 48 && CatalogId.IsMatch(value);
+
+        private static void ValidateColor(string color, string field, List<RunnerDiagnostic> errors)
+        {
+            if (!string.IsNullOrEmpty(color) && !HexColor.IsMatch(color))
+                errors.Add(new RunnerDiagnostic(field, "Couleur attendue au format #RRGGBB."));
+        }
     }
 }

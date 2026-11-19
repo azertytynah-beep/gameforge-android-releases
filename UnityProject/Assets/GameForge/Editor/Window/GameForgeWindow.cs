@@ -25,6 +25,8 @@ namespace GameForge.Editor
         private bool customBinding;
         private VisualElement workspace;
         private GameForgeSteps navigation;
+        private VisualElement body;
+        private ForgeProjectPanel projects;
         private VisualElement[] pages;
         private Label heading;
         private TextField gameName;
@@ -73,7 +75,14 @@ namespace GameForge.Editor
             workspace.Add(CreateHeader());
             navigation = new GameForgeSteps(Steps, index => ShowStep((Step)index));
             workspace.Add(navigation);
-            var body = Element("gameforge-body");
+            body = Element("gameforge-body");
+            projects = catalog == null ? null : new ForgeProjectPanel(
+                new ForgeProjectService(new ForgeProjectStore(), catalog),
+                result =>
+                {
+                    ShowProjects(false);
+                    OnGenerated(result);
+                }, () => ShowProjects(false));
             var content = Element("gameforge-content");
             heading = Text("", "gameforge-heading");
             content.Add(Text("Endless Runner 3D", "gameforge-eyebrow"));
@@ -85,6 +94,9 @@ namespace GameForge.Editor
             body.Add(content);
             body.Add(CreatePreview());
             workspace.Add(body);
+            if (projects != null)
+                workspace.Add(projects);
+            ShowProjects(false);
             rootVisualElement.Clear();
             rootVisualElement.Add(workspace);
             ShowStep(activeStep);
@@ -135,11 +147,33 @@ namespace GameForge.Editor
         {
             var card = Element("gameforge-card");
             card.AddToClassList("gameforge-card--actions");
+            if (projects != null)
+            {
+                card.Add(StyledButton("gameforge-start-project", "Commencer à créer un jeu", "gameforge-primary", () =>
+                {
+                    ShowProjects(true);
+                    projects.StartProject();
+                }));
+                card.Add(StyledButton("gameforge-projects", "Mes jeux", "gameforge-quiet", () =>
+                {
+                    ShowProjects(true);
+                    projects.ShowProjects();
+                }));
+            }
             gameName = new TextField("Nom du jeu") { name = "gameforge-game-name", maxLength = RunnerConfigValidator.MaxTitleLength };
             gameName.RegisterValueChangedCallback(change => form.GameTitle = change.newValue);
             card.Add(gameName);
-            card.Add(StyledButton("gameforge-next", "Ajuster les réglages", "gameforge-primary", () => ShowStep(Step.Adjust)));
+            card.Add(StyledButton("gameforge-next", "Ajuster les réglages", "gameforge-quiet", () => ShowStep(Step.Adjust)));
             return card;
+        }
+
+        private void ShowProjects(bool show)
+        {
+            if (projects == null)
+                return;
+            navigation.style.display = show ? DisplayStyle.None : DisplayStyle.Flex;
+            body.style.display = show ? DisplayStyle.None : DisplayStyle.Flex;
+            projects.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private static VisualElement CreatePreview()
@@ -235,6 +269,7 @@ namespace GameForge.Editor
             bool available = !EditorApplication.isPlayingOrWillChangePlaymode;
             foreach (var page in pages)
                 page.SetEnabled(available);
+            projects?.SetEnabled(available);
         }
 
         private void OnGenerated(GenerationResult result)

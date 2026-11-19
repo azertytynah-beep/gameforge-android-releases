@@ -14,6 +14,7 @@ namespace GameForge.Runtime
         [SerializeField] private RunnerHud hud;
 
         private Vector3 startPosition;
+        private Action<float, float> movePlayer;
 
         private void Start()
         {
@@ -22,7 +23,16 @@ namespace GameForge.Runtime
 
             startPosition = motor.transform.position;
             motor.Configure(settings);
+            movePlayer = motor.Step;
             cameraFollow.Bind(motor.transform);
+            if (settings.SkyColor is Color skyColor)
+            {
+                var camera = cameraFollow.GetComponent<Camera>();
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = skyColor;
+            }
+            if (settings.PlayerColor is Color playerColor)
+                RunnerTint.Apply(motor.gameObject, playerColor);
             stream.Configure(theme.Segments, catalog.Obstacles);
             ResetRun();
 
@@ -39,9 +49,7 @@ namespace GameForge.Runtime
             if (session.Feedback.State != RunnerState.Running)
                 return;
 
-            float seconds = Time.deltaTime;
-            session.Advance(seconds);
-            motor.Step(session.Feedback.Speed, seconds);
+            session.Advance(Time.deltaTime, movePlayer);
             stream.AdvanceTo(motor.transform.position.z);
         }
 
