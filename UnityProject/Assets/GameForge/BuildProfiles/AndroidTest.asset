@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a3ce3ae6a758de429a15dc1ade5a7ba, type: 3}
+  m_Name: AndroidTest
+  m_EditorClassIdentifier: GameForge.Editor::GameForge.Editor.AndroidTestProfile
+  versionName: 0.1.0
+  versionCode: 1
+  minimumSdk: 25
+  targetSdk: 36
+  orientation: 0
+  graphicsApi: 11

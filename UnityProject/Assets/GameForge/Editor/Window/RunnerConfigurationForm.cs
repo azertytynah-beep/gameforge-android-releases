@@ -26,6 +26,8 @@ namespace GameForge.Editor
         private IRunnerCatalog catalog;
         private IGameGenerator generator;
 
+        internal event Action<GenerationResult> VariantGenerated;
+
         public RunnerConfigurationForm()
         {
             style.flexGrow = 1f;
@@ -98,26 +100,43 @@ namespace GameForge.Editor
             if (!Validate(out var configuration))
                 return false;
 
+            GenerationResult response;
             try
             {
-                var response = generator.Generate(configuration);
-                if (response?.Succeeded == true)
-                {
-                    ShowResult(HelpBoxMessageType.Info, $"Variante {response.VariantId} créée dans {response.ScenePath}.");
-                    return true;
-                }
-
-                var messages = response?.Diagnostics?.Select(diagnostic => diagnostic.Message);
-                ShowResult(HelpBoxMessageType.Error, messages == null || !messages.Any()
-                    ? "La génération a échoué."
-                    : string.Join("\n", messages));
+                response = generator.Generate(configuration);
             }
             catch (Exception exception)
             {
                 ShowResult(HelpBoxMessageType.Error, $"La génération a échoué. {exception.Message}");
+                return false;
             }
 
+            if (response?.Succeeded == true)
+            {
+                ShowResult(HelpBoxMessageType.Info, $"Variante {response.VariantId} créée dans {response.ScenePath}.");
+                VariantGenerated?.Invoke(response);
+                return true;
+            }
+
+            var messages = response?.Diagnostics?.Select(diagnostic => diagnostic.Message);
+            ShowResult(HelpBoxMessageType.Error, messages == null || !messages.Any()
+                ? "La génération a échoué."
+                : string.Join("\n", messages));
             return false;
+        }
+
+        internal void Load(RunnerConfigV1 configuration)
+        {
+            title.SetValueWithoutNotify(configuration.title);
+            seed.SetValueWithoutNotify(Number(configuration.seed));
+            initialSpeed.SetValueWithoutNotify(Number(configuration.initialSpeed));
+            maxSpeed.SetValueWithoutNotify(Number(configuration.maxSpeed));
+            acceleration.SetValueWithoutNotify(Number(configuration.acceleration));
+            density.SetValueWithoutNotify(Number(configuration.obstacleDensity));
+            theme.SetValueWithoutNotify(configuration.themeId);
+            foreach (var option in obstacleOptions)
+                option.SetValueWithoutNotify(configuration.obstacleIds.Contains(option.label));
+            InputChanged();
         }
 
         private T AddField<T>(T field, string name) where T : BaseField<string>

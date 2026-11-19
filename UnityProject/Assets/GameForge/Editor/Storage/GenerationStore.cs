@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using GameForge.Runtime;
 using UnityEditor;
 using UnityEngine;
@@ -53,6 +54,48 @@ namespace GameForge.Editor
             var manifest = ReadJson<VariantManifest>(Path.Combine(directory, ManifestFile));
             ValidateManifest(id, manifest);
             return new StoredVariant(path, manifest);
+        }
+
+        public StoredVariant Rename(string id, string title)
+        {
+            RequireTitle(title);
+            using var lease = AcquireLock();
+            var variant = ReadVariant(id);
+            if (variant.Manifest.title == title)
+                return variant;
+
+            variant.Manifest.title = title;
+            var manifestPath = GeneratedRoot + "/" + id + "/" + ManifestFile;
+            var destination = ProjectPath(manifestPath);
+            var pending = Path.Combine(LockRoot, Guid.NewGuid().ToString("N") + ".rename");
+            WriteNew(pending, JsonUtility.ToJson(variant.Manifest, true));
+            AssetDatabase.DisallowAutoRefresh();
+            try
+            {
+                AssetDatabase.ReleaseCachedFileHandles();
+                for (var delay = 25; ; delay *= 2)
+                {
+                    try
+                    {
+                        File.Replace(pending, destination, null);
+                        break;
+                    }
+                    catch (IOException exception) when (delay <= 200 && Application.platform == RuntimePlatform.WindowsEditor &&
+                        (exception.HResult & 0xffff) is 32 or 33 or 1175)
+                    {
+                        // An import worker can still have the previous manifest open.
+                        Thread.Sleep(delay);
+                    }
+                }
+            }
+            finally
+            {
+                AssetDatabase.AllowAutoRefresh();
+                File.Delete(pending);
+            }
+
+            AssetDatabase.ImportAsset(manifestPath, ImportAssetOptions.ForceSynchronousImport);
+            return variant;
         }
 
         public string[] ListInterrupted()
