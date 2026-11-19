@@ -15,6 +15,7 @@ namespace GameForge.Runtime
         private int windowSize;
         private Color? trackTint;
         private Color? obstacleTint;
+        private RunnerEnemyDesign enemyDesign;
 
         public int ActiveSegmentCount => active.Count;
         public int PooledSegmentCount => segmentPool?.Count ?? 0;
@@ -72,10 +73,11 @@ namespace GameForge.Runtime
             var nextObstacleTint = settings.ObstacleColor;
             if (!Nullable.Equals(trackTint, nextTrackTint))
                 segmentPool.Clear();
-            if (!Nullable.Equals(obstacleTint, nextObstacleTint))
+            if (!Nullable.Equals(obstacleTint, nextObstacleTint) || enemyDesign != settings.EnemyDesign)
                 obstaclePool.Clear();
             trackTint = nextTrackTint;
             obstacleTint = nextObstacleTint;
+            enemyDesign = settings.EnemyDesign;
             planner = nextPlanner;
             for (int i = 0; i < windowSize; i++)
                 SpawnNext();
@@ -107,6 +109,8 @@ namespace GameForge.Runtime
 
         private void TintObstacle(GameObject obstacle)
         {
+            if (enemyDesign != RunnerEnemyDesign.Catalog)
+                RunnerEnemyVisual.Apply(obstacle, enemyDesign);
             if (obstacleTint is Color color)
                 RunnerTint.Apply(obstacle, color);
         }

@@ -44,6 +44,8 @@ namespace GameForge.Runtime
 
             if (!Enum.IsDefined(typeof(RunnerObjective), config.objective))
                 errors.Add(new RunnerDiagnostic("objective", "Objectif de partie inconnu."));
+            if (!Enum.IsDefined(typeof(RunnerEnemyDesign), config.enemyDesign))
+                errors.Add(new RunnerDiagnostic("enemyDesign", "Silhouette d’ennemi inconnue."));
             if ((config.objective is RunnerObjective.Distance or RunnerObjective.Sprint) &&
                 (config.goalDistance < 1 || config.goalDistance > MaxGoalDistance))
                 errors.Add(new RunnerDiagnostic("goalDistance", $"Distance attendue entre 1 et {MaxGoalDistance} m."));

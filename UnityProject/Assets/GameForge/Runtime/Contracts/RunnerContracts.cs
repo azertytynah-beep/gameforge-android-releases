@@ -22,6 +22,16 @@ namespace GameForge.Runtime
         Endurance
     }
 
+    public enum RunnerEnemyDesign
+    {
+        Catalog,
+        Robot,
+        Creature,
+        Golem,
+        Drone,
+        Plant
+    }
+
     public enum LaneIntent
     {
         Left = -1,

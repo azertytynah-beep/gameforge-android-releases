@@ -22,6 +22,7 @@ namespace GameForge.Runtime
         public RunnerObjective objective;
         public int goalDistance;
         public int timeLimitSeconds;
+        public RunnerEnemyDesign enemyDesign;
 
         public static RunnerConfigV1 CreateDefault(string themeId = "theme-default", string obstacleId = "obstacle-block")
         {

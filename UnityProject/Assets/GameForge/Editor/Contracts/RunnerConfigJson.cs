@@ -17,7 +17,7 @@ namespace GameForge.Editor
         {
             "schemaVersion", "templateId", "title", "seed", "initialSpeed", "maxSpeed",
             "acceleration", "obstacleDensity", "themeId", "obstacleIds",
-            "skyColor", "trackColor", "playerColor", "obstacleColor", "objective", "goalDistance", "timeLimitSeconds"
+            "skyColor", "trackColor", "playerColor", "obstacleColor", "objective", "goalDistance", "timeLimitSeconds", "enemyDesign"
         };
 
         public static bool TryParse(string json, IRunnerCatalog catalog, out RunnerConfigV1 configuration,
@@ -73,7 +73,8 @@ namespace GameForge.Editor
                 obstacleColor = ReadOptionalString(root["obstacleColor"], "obstacleColor", errors),
                 objective = (RunnerObjective)ReadOptionalInteger(root, "objective", errors),
                 goalDistance = ReadOptionalInteger(root, "goalDistance", errors),
-                timeLimitSeconds = ReadOptionalInteger(root, "timeLimitSeconds", errors)
+                timeLimitSeconds = ReadOptionalInteger(root, "timeLimitSeconds", errors),
+                enemyDesign = (RunnerEnemyDesign)ReadOptionalInteger(root, "enemyDesign", errors)
             };
 
             diagnostics = errors.Count == 0 ? RunnerConfigValidator.Validate(draft, catalog) : errors;

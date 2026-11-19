@@ -27,7 +27,7 @@ namespace GameForge.Editor
 
         public ForgeProject Create()
         {
-            var draft = new ForgeProject { id = Guid.NewGuid().ToString("N") };
+            var draft = new ForgeProject { id = Guid.NewGuid().ToString("N"), brief = new ForgeBrief { detailed = true } };
             Write(draft, replace: false);
             return draft;
         }
@@ -150,11 +150,14 @@ namespace GameForge.Editor
         {
             if (draft == null || draft.schemaVersion != 1 || draft.id != id ||
                 !Enum.IsDefined(typeof(ForgeStage), draft.stage) || !Enum.IsDefined(typeof(ForgeStart), draft.start) ||
-                (draft.locks & ~AllowedLocks) != 0 || draft.lookRound < 0 || draft.playRound < 0)
+                (draft.locks & ~AllowedLocks) != 0 || draft.lookRound < 0 || draft.playRound < 0 ||
+                draft.briefChapter < 0 || draft.briefChapter >= ForgeBrief.Chapters.Length)
                 throw new InvalidDataException("Le format du projet GameForge est invalide ou incompatible.");
 
             ValidateText(draft.title, RunnerConfigValidator.MaxTitleLength);
             ValidateText(draft.idea, MaxIdeaLength, allowMultiline: true);
+            draft.brief ??= new ForgeBrief();
+            draft.brief.Validate();
             ValidateConfig(draft.answers);
             ValidateProposals(draft.looks, draft.chosenLook);
             ValidateProposals(draft.playStyles, draft.chosenPlay);
@@ -186,6 +189,9 @@ namespace GameForge.Editor
                     throw new InvalidDataException("Une proposition du projet GameForge est manquante.");
                 ValidateText(proposal.label, 120);
                 ValidateText(proposal.summary, 1000, allowMultiline: true);
+                ValidateText(proposal.detail, 1000, allowMultiline: true);
+                ValidateText(proposal.assetNote, 400, allowMultiline: true);
+                ValidateText(proposal.enemyStyle, 60);
                 ValidateConfig(proposal.config);
             }
         }
@@ -195,6 +201,7 @@ namespace GameForge.Editor
             if (config == null || config.schemaVersion != RunnerConfigV1.Version ||
                 config.templateId != RunnerConfigV1.RunnerTemplateId ||
                 !Enum.IsDefined(typeof(RunnerObjective), config.objective) ||
+                !Enum.IsDefined(typeof(RunnerEnemyDesign), config.enemyDesign) ||
                 !IsFinite(config.initialSpeed) || !IsFinite(config.maxSpeed) || !IsFinite(config.acceleration) ||
                 config.obstacleIds?.Length > RunnerConfigValidator.MaxObstacleTypes)
                 throw new InvalidDataException("Les réglages du projet GameForge sont invalides.");

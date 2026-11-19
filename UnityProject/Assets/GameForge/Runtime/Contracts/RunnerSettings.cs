@@ -18,6 +18,7 @@ namespace GameForge.Runtime
         public RunnerObjective Objective => configuration.objective;
         public int GoalDistance => configuration.goalDistance;
         public int TimeLimitSeconds => configuration.timeLimitSeconds;
+        internal RunnerEnemyDesign EnemyDesign => configuration.enemyDesign;
         internal Color? SkyColor => ParseColor(configuration.skyColor);
         internal Color? TrackColor => ParseColor(configuration.trackColor);
         internal Color? PlayerColor => ParseColor(configuration.playerColor);

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace GameForge.Editor
 {
-    internal sealed class ForgeProjectService
+    internal sealed partial class ForgeProjectService
     {
         private const int ProposalCount = ForgeProject.ProposalCount;
         private const string ModelKey = "GameForge.LocalIdeasModel";
@@ -54,32 +54,50 @@ namespace GameForge.Editor
 
         public void ProposeLooks(ForgeProject draft, bool regenerate = false)
         {
+            var proposals = BuildLooks(draft, regenerate, out int round);
+            PublishLooks(draft, proposals, round);
+        }
+
+        private ForgeProposal[] BuildLooks(ForgeProject draft, bool regenerate, out int round)
+        {
             RequireStage(draft, regenerate ? ForgeStage.Appearance : ForgeStage.Questions);
             RequireNoPendingVariant(draft);
             var answers = draft.answers.Copy();
             answers.title = draft.DisplayTitle;
+            var brief = draft.brief;
+            ApplyBrief(draft, answers);
             RequireValid(answers);
-            draft.lookRound = regenerate ? checked(draft.lookRound + 1) : 0;
+            int series = regenerate ? checked(draft.lookRound + 1) : 0;
+            round = series;
             int firstPalette = (int)((uint)Seed(answers.seed, draft.idea) % (uint)Palettes.Length);
-            draft.looks = Enumerable.Range(0, ProposalCount).Select(index =>
+            return Enumerable.Range(0, ProposalCount).Select(index =>
             {
-                int palette = (firstPalette + (draft.lookRound % Palettes.Length) * ProposalCount + index) % Palettes.Length;
+                int palette = (firstPalette + (series % Palettes.Length) * ProposalCount + index) % Palettes.Length;
                 var look = answers.Copy();
-                if (!Locked(draft, ForgeLocks.Theme) && catalog.Themes.Count > 1 && index % 2 != 0)
-                    look.themeId = catalog.Themes.First(theme => theme.Id != answers.themeId).Id;
+                if (!Locked(draft, ForgeLocks.Theme) && !FixedLighting(brief) && catalog.Themes.Count > 1 && index % 2 != 0)
+                    look.themeId = catalog.Themes.First(theme => theme.Id != look.themeId).Id;
                 bool night = look.themeId == "theme-night";
-                float hue = PaletteHues[palette];
+                float hue = FindHue(brief?.Get(ForgePromptId.Art)) is float wanted
+                    ? wanted + (index - 1.5f) * .032f + (series % 11) * .009f : PaletteHues[palette];
                 look.skyColor = Hex(hue, night ? .57f : .35f, night ? .24f : .86f);
                 look.trackColor = Hex(hue, .36f, night ? .42f : .47f);
                 look.playerColor = Hex(hue + .12f, .45f, 1f);
-                look.obstacleColor = Hex(hue + .48f, .68f, 1f);
-                return new ForgeProposal
+                look.obstacleColor = Hex(FindHue(brief?.Get(ForgePromptId.Enemy)) ?? hue + .48f, .68f, 1f);
+                var proposal = new ForgeProposal
                 {
-                    label = Palettes[palette],
-                    summary = night ? "Ciel nocturne et obstacles lumineux." : "Ciel clair et obstacles contrastés.",
+                    label = brief?.detailed == true ? LookLabel(index, series, Palettes[palette], night) : Palettes[palette],
+                    summary = night ? "Ciel nocturne, piste mate et dangers lumineux." : "Ciel clair, piste contrastée et obstacles visibles.",
                     config = look
                 };
+                DescribeLook(brief, proposal, index, series);
+                return proposal;
             }).ToArray();
+        }
+
+        private void PublishLooks(ForgeProject draft, ForgeProposal[] proposals, int round)
+        {
+            draft.lookRound = round;
+            draft.looks = proposals;
             draft.chosenLook = draft.chosenPlay = -1;
             draft.playRound = 0;
             draft.playStyles = null;
@@ -94,79 +112,89 @@ namespace GameForge.Editor
             ProposalAt(draft.looks, index);
             draft.playRound = 0;
             draft.chosenLook = index;
-            ProposeGameplay(draft);
+            PublishGameplay(draft, BuildGameplay(draft, 0), 0);
         }
 
         public void RegenerateGameplay(ForgeProject draft)
         {
             RequireStage(draft, ForgeStage.Gameplay);
             RequireNoPendingVariant(draft);
-            draft.playRound = checked(draft.playRound + 1);
-            ProposeGameplay(draft);
+            int round = checked(draft.playRound + 1);
+            PublishGameplay(draft, BuildGameplay(draft, round), round);
         }
 
-        private void ProposeGameplay(ForgeProject draft)
+        private ForgeProposal[] BuildGameplay(ForgeProject draft, int round)
         {
             var look = ProposalAt(draft.looks, draft.chosenLook).config;
             RequireValid(look);
             var obstacles = catalog.Obstacles.Select(obstacle => obstacle.Id).ToArray();
-            draft.playStyles = Enumerable.Range(0, ProposalCount).Select(index =>
+            return Enumerable.Range(0, ProposalCount).Select(index =>
             {
                 var play = look.Copy();
-                play.seed = unchecked(Seed(play.seed, draft.id) + draft.playRound * ProposalCount + index);
-                int variation = (index + draft.playRound % ProposalCount) % ProposalCount;
-                if (!Locked(draft, ForgeLocks.Pace))
+                play.seed = unchecked(Seed(play.seed, draft.id) + round * ProposalCount + index);
+                int variation = (index + round % ProposalCount) % ProposalCount;
+                if (!FixedPace(draft))
                 {
                     float nudge = new[] { 0f, -1.5f, 1f, 2f }[variation];
                     play.initialSpeed = Mathf.Clamp(play.initialSpeed + nudge, 4f, 12f);
                     play.maxSpeed = Mathf.Clamp(play.maxSpeed + nudge, play.initialSpeed, 18f);
-                    if (play.objective == RunnerObjective.Sprint && Locked(draft, ForgeLocks.Objective) &&
+                    if (play.objective == RunnerObjective.Sprint && FixedObjective(draft) &&
                         DistanceInTime(play) < play.goalDistance && DistanceInTime(look) >= look.goalDistance)
                     {
                         play.initialSpeed = look.initialSpeed;
                         play.maxSpeed = look.maxSpeed;
                     }
                 }
-                if (!Locked(draft, ForgeLocks.Density) && variation != 0)
+                if (!FixedDensity(draft) && variation != 0)
                     play.obstacleDensity = (Math.Max(1, play.obstacleDensity) - 1 + variation) % 3 + 1;
-                if (!Locked(draft, ForgeLocks.Obstacle) && variation != 0 && obstacles.Length > 0)
+                if (!Locked(draft, ForgeLocks.Obstacle) && !NoEnemies(draft.brief) && variation != 0 && obstacles.Length > 0)
                     play.obstacleIds = new[] { obstacles[(variation - 1) % obstacles.Length] };
                 if (play.obstacleIds.Length == 0 && play.obstacleDensity > 0)
                     play.obstacleDensity = 0;
 
-                if (!Locked(draft, ForgeLocks.Objective))
+                if (!FixedObjective(draft))
                 {
                     play.objective = (RunnerObjective)(((int)look.objective + index) % Objectives.Length);
-                    if (play.objective != look.objective || draft.playRound > 0)
+                    if (play.objective != look.objective || round > 0)
                     {
                         play.goalDistance = play.objective is RunnerObjective.Distance or RunnerObjective.Sprint
-                            ? 100 + (draft.playRound % 9) * 15 : 0;
+                            ? 100 + (round % 9) * 15 : 0;
                         play.timeLimitSeconds = play.objective is RunnerObjective.Sprint or RunnerObjective.Endurance
-                            ? 30 + (draft.playRound % 7) * 5 : 0;
+                            ? 30 + (round % 7) * 5 : 0;
                     }
                     if (play.objective == RunnerObjective.Sprint)
                         play.goalDistance = Math.Min(play.goalDistance, (int)DistanceInTime(play));
                 }
-                var goal = play.objective switch
-                {
-                    RunnerObjective.Distance => $"Atteindre {play.goalDistance} m.",
-                    RunnerObjective.Sprint => $"Atteindre {play.goalDistance} m en {play.timeLimitSeconds} s.",
-                    RunnerObjective.Endurance => $"Survivre {play.timeLimitSeconds} s.",
-                    _ => "Aller le plus loin possible."
-                };
                 RequireValid(play);
                 return new ForgeProposal
                 {
-                    label = Locked(draft, ForgeLocks.Objective)
+                    label = FixedObjective(draft)
                         ? $"{Objectives[(int)play.objective]} · parcours {index + 1}" : Objectives[(int)play.objective],
-                    summary = goal,
+                    summary = DescribeGoal(play),
+                    detail = DescribeGameplay(draft.brief, play, variation),
+                    enemyStyle = EnemyLabel(play.enemyDesign),
+                    assetNote = AssetNote(draft.brief, play),
                     config = play
                 };
             }).ToArray();
+        }
+
+        private void PublishGameplay(ForgeProject draft, ForgeProposal[] proposals, int round)
+        {
+            draft.playStyles = proposals;
+            draft.playRound = round;
             draft.stage = ForgeStage.Gameplay;
             draft.chosenPlay = -1;
             Save(draft);
         }
+
+        private static string DescribeGoal(RunnerConfigV1 play) => play.objective switch
+        {
+            RunnerObjective.Distance => $"Atteindre {play.goalDistance} m.",
+            RunnerObjective.Sprint => $"Atteindre {play.goalDistance} m en {play.timeLimitSeconds} s.",
+            RunnerObjective.Endurance => $"Survivre {play.timeLimitSeconds} s.",
+            _ => "Aller le plus loin possible."
+        };
 
         public GenerationResult Generate(ForgeProject draft, int index)
         {
@@ -214,7 +242,7 @@ namespace GameForge.Editor
 
         private static bool SameAppearance(RunnerConfigV1 look, RunnerConfigV1 play) =>
             look.themeId == play.themeId && look.skyColor == play.skyColor && look.trackColor == play.trackColor &&
-            look.playerColor == play.playerColor && look.obstacleColor == play.obstacleColor;
+            look.playerColor == play.playerColor && look.obstacleColor == play.obstacleColor && look.enemyDesign == play.enemyDesign;
 
         private static bool KeepsLockedAnswers(ForgeProject draft, RunnerConfigV1 play)
         {

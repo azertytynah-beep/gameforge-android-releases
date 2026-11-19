@@ -457,3 +457,144 @@
     min-width: 94px;
     height: 30px;
 }
+
+.gameforge-atelier {
+    flex-grow: 1;
+    align-self: center;
+    width: 100%;
+    max-width: 1040px;
+    min-height: 0;
+}
+
+.gameforge-workspace .gameforge-atelier-title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    align-self: center;
+    white-space: normal;
+}
+
+.gameforge-atelier-frame {
+    flex-grow: 1;
+    min-height: 0;
+    background-color: var(--gameforge-surface);
+    border-width: 1px;
+    border-color: var(--gameforge-border);
+    border-top-color: var(--gameforge-rim);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.gameforge-atelier .gameforge-project-page {
+    padding: 12px 16px 4px;
+}
+
+.gameforge-atelier-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    padding: 8px 12px;
+    border-top-width: 1px;
+    border-top-color: var(--gameforge-border);
+    background-color: var(--gameforge-inset);
+}
+
+.gameforge-atelier-footer .unity-button {
+    margin: 3px;
+    white-space: normal;
+}
+
+.gameforge-atelier-omni-action {
+    min-width: 0;
+    padding: 0 4px;
+}
+
+.gameforge-workspace .gameforge-atelier-disclosure {
+    color: var(--gameforge-muted);
+    font-size: 11px;
+    white-space: normal;
+    margin: 0 3px 3px;
+}
+
+.gameforge-atelier-frame > .unity-help-box,
+.gameforge-atelier-frame > .unity-button {
+    flex-shrink: 0;
+    margin: 4px 12px;
+}
+
+.gameforge-atelier-frame > .unity-button {
+    align-self: flex-end;
+}
+
+.gameforge-atelier-chapter,
+.gameforge-atelier-settings {
+    width: 100%;
+    max-width: 740px;
+    align-self: center;
+    margin: 5px 0 10px;
+    padding: 10px;
+    border-width: 1px;
+    border-color: var(--gameforge-border);
+    border-top-color: var(--gameforge-rim);
+    border-radius: 12px;
+    background-color: var(--gameforge-inset);
+}
+
+.gameforge-atelier-chapters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-self: center;
+    width: 100%;
+    max-width: 740px;
+    margin-bottom: 4px;
+}
+
+.gameforge-atelier-answer {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top-width: 1px;
+    border-top-color: var(--gameforge-border);
+}
+
+.gameforge-atelier-textarea {
+    flex-direction: column;
+    min-width: 0;
+    margin-bottom: 4px;
+}
+
+.gameforge-atelier-textarea > .unity-base-field__label {
+    width: auto;
+    min-width: 0;
+    margin-bottom: 4px;
+    white-space: normal;
+    -unity-font-style: bold;
+}
+
+.gameforge-atelier-textarea .unity-base-text-field__input {
+    min-height: 48px;
+}
+
+.gameforge-workspace .gameforge-atelier-proposal-detail {
+    color: var(--gameforge-muted);
+    white-space: normal;
+    margin-bottom: 4px;
+}
+
+.gameforge-atelier .gameforge-project-thumbnail {
+    height: 138px;
+}
+
+.gameforge-atelier-kept-preview {
+    width: 100%;
+    max-width: 320px;
+    margin: 0 0 8px 4px;
+}
+
+.gameforge-workspace--compact .gameforge-atelier .gameforge-project-page {
+    padding: 8px;
+}
+
+.gameforge-workspace--compact .gameforge-atelier-footer {
+    padding: 5px;
+}

@@ -22,6 +22,9 @@ namespace GameForge.Editor
     {
         public string label;
         public string summary;
+        public string detail;
+        public string assetNote;
+        public string enemyStyle;
         public RunnerConfigV1 config;
     }
 
@@ -37,6 +40,8 @@ namespace GameForge.Editor
         public ForgeStage stage;
         public ForgeStart start;
         public ForgeLocks locks;
+        public ForgeBrief brief = new ForgeBrief();
+        public int briefChapter;
         public RunnerConfigV1 answers = RunnerConfigV1.CreateDefault();
         public ForgeProposal[] looks;
         public ForgeProposal[] playStyles;

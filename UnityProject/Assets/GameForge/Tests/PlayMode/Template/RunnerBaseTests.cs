@@ -129,6 +129,25 @@ namespace GameForge.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator EnemyBriefUsesAnOriginalMeshWithoutChangingCollision()
+        {
+            var config = RunnerConfigV1.CreateDefault("theme-default", "obstacle-barrier");
+            config.enemyDesign = RunnerEnemyDesign.Drone;
+            yield return LoadSource(config);
+
+            var stream = SceneManager.GetActiveScene().GetRootGameObjects().Single().GetComponentInChildren<SegmentStream>();
+            var obstacles = stream.GetComponentsInChildren<BoxCollider>().Where(item => item.name.StartsWith("Barrier")).ToArray();
+            Assert.That(obstacles, Has.Length.GreaterThan(1));
+            var visuals = obstacles.Select(item => item.transform.Find("EnemyVisual").GetComponent<MeshFilter>()).ToArray();
+            Assert.That(visuals[0].sharedMesh.name, Is.EqualTo("GameForge Drone"));
+            Assert.That(visuals[0].sharedMesh.vertexCount, Is.GreaterThan(30));
+            Assert.That(visuals.Select(item => item.sharedMesh), Is.All.SameAs(visuals[0].sharedMesh));
+            Assert.That(obstacles.Select(item => item.GetComponentsInChildren<Collider>().Length), Is.All.EqualTo(1));
+            Assert.That(visuals[0].transform.localScale, Is.EqualTo(obstacles[0].size));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator ConfiguredPaletteAndGoalAffectTheActualScene()
         {
             var config = RunnerConfigV1.CreateDefault();

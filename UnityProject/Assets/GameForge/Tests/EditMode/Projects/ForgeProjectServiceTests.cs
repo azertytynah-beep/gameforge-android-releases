@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.IO;
 using System.Linq;
 using GameForge.Editor;
@@ -7,6 +8,8 @@ using GameForge.Tests.EditMode.Generation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace GameForge.Tests.EditMode.Projects
 {
@@ -44,6 +47,7 @@ namespace GameForge.Tests.EditMode.Projects
         {
             var originalFolders = PublishedFolders();
             var draft = service.Create();
+            DelegateRequiredQuestions(draft);
             Assert.That(draft.stage, Is.EqualTo(ForgeStage.Idea));
             Assert.Throws<InvalidOperationException>(() => service.ProposeLooks(draft));
             Assert.Throws<InvalidOperationException>(() => service.StartQuestions(draft));
@@ -81,6 +85,110 @@ namespace GameForge.Tests.EditMode.Projects
             service.Save(saved);
             Assert.That(service.Generate(service.Read(saved.id), acceptedIndex).VariantId, Is.EqualTo(variant.Id));
             Assert.That(PublishedFolders().Except(originalFolders).Count(), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DetailedBriefPersistsAndChangesTheSceneInputs()
+        {
+            var draft = service.Create();
+            draft.start = ForgeStart.Choose;
+            service.StartQuestions(draft);
+            Assert.That(() => service.ProposeLooks(draft), Throws.InvalidOperationException);
+            DelegateRequiredQuestions(draft);
+            draft.brief.Set(ForgePromptId.World, "Un tunnel nocturne, avec des panneaux mats.");
+            draft.brief.Set(ForgePromptId.Enemy, "Un drone vert à deux rotors.");
+            draft.brief.SetLocked(ForgePromptId.Enemy, true);
+            draft.brief.Set(ForgePromptId.Goal, "Survivre 45 secondes.");
+            draft.brief.SetLocked(ForgePromptId.Goal, true);
+            draft.brief.Set(ForgePromptId.Encounters, "2 obstacles par segment.");
+            draft.brief.SetLocked(ForgePromptId.Encounters, true);
+            draft.brief.Set(ForgePromptId.Progression, "Un début tranquille.");
+            draft.brief.SetLocked(ForgePromptId.Progression, true);
+            draft.briefChapter = 2;
+            service.Save(draft);
+
+            draft = service.Read(draft.id);
+            Assert.That(draft.briefChapter, Is.EqualTo(2));
+            Assert.That(draft.brief.Get(ForgePromptId.Enemy), Is.EqualTo("Un drone vert à deux rotors."));
+            Assert.That(draft.brief.IsLocked(ForgePromptId.Enemy), Is.True);
+            service.ProposeLooks(draft);
+            Assert.That(draft.looks.Select(look => look.config.enemyDesign), Is.All.EqualTo(RunnerEnemyDesign.Drone));
+            Assert.That(draft.looks.Select(look => look.config.themeId), Is.All.EqualTo("theme-night"));
+            Assert.That(draft.looks.Select(look => look.detail), Is.All.Matches<string>(text => text.Contains("tunnel nocturne")));
+            service.ChooseLook(draft, 1);
+            service.RegenerateGameplay(draft);
+            var saved = service.Read(draft.id);
+            Assert.That(saved.playStyles.Select(play => play.config.enemyDesign), Is.All.EqualTo(RunnerEnemyDesign.Drone));
+            Assert.That(saved.playStyles.Select(play => play.config.objective), Is.All.EqualTo(RunnerObjective.Endurance));
+            Assert.That(saved.playStyles.Select(play => play.config.timeLimitSeconds), Is.All.EqualTo(45));
+            Assert.That(saved.playStyles.Select(play => play.config.obstacleDensity), Is.All.EqualTo(2));
+            Assert.That(saved.playStyles.Select(play => play.config.initialSpeed), Is.All.EqualTo(5f));
+        }
+
+        [Test]
+        public void OmniRouteRequiresFourDistinctLabels()
+        {
+            const string valid = "{\"proposals\":[{\"label\":\"Premier\"},{\"label\":\"Second\"},{\"label\":\"Troisième\"},{\"label\":\"Quatrième\"}]}";
+            Assert.That(ForgeProjectService.ReadAiLabels(valid), Has.Length.EqualTo(4));
+            Assert.Throws<InvalidDataException>(() => ForgeProjectService.ReadAiLabels(valid.Replace("Second", "Premier")));
+            Assert.Throws<InvalidDataException>(() => ForgeProjectService.ReadAiLabels("{\"proposals\":[]}"));
+        }
+
+        [UnityTest]
+        public IEnumerator AtelierRestoresActiveChapterAndKeepsTheTwoSeriesInOrder()
+        {
+            var window = ScriptableObject.CreateInstance<EditorWindow>();
+            var panel = new ForgeProjectPanel(service, _ => Assert.Fail("Aucun jeu ne doit encore être créé."), () => { });
+            window.Show();
+            try
+            {
+                window.rootVisualElement.Add(panel);
+                yield return null;
+                panel.StartProject();
+                Click(panel, "forge-project-start-choose");
+                Click(panel, "forge-project-questionnaire");
+                Click(panel, "forge-project-brief-delegate-Concept");
+                Click(panel, "forge-project-brief-delegate-Player");
+                Click(panel, "forge-project-chapter-1");
+                Click(panel, "forge-project-brief-delegate-World");
+                Click(panel, "forge-project-chapter-2");
+                const string drone = "Un drone vert à deux rotors.";
+                var answer = panel.Q<TextField>("forge-project-brief-Enemy");
+                answer.value = drone;
+                panel.Q<Toggle>("forge-project-brief-lock-Enemy").value = true;
+                Assert.That(panel.Q<Button>("forge-project-brief-Enemy-microphone"), Is.Not.Null);
+
+                var saved = service.List().Single();
+                panel.ShowProjects();
+                Click(panel, "forge-project-resume-" + saved.id);
+                Assert.That(panel.Q<TextField>("forge-project-brief-Enemy").value, Is.EqualTo(drone));
+                Assert.That(panel.Q<Toggle>("forge-project-brief-lock-Enemy").value, Is.True);
+                Click(panel, "forge-project-next-chapter");
+                Click(panel, "forge-project-brief-delegate-Goal");
+                Click(panel, "forge-project-next-chapter");
+                Click(panel, "forge-project-propose-looks");
+                for (int i = 0; i < 4; i++)
+                    Assert.That(panel.Q<Button>("forge-project-look-" + i), Is.Not.Null);
+                Click(panel, "forge-project-look-2");
+                for (int i = 0; i < 4; i++)
+                    Assert.That(panel.Q<Button>("forge-project-gameplay-" + i), Is.Not.Null);
+                Assert.That(panel.Q<Button>("forge-project-generate").enabledInHierarchy, Is.False);
+                Assert.That(service.Read(saved.id).variantId, Is.Null.Or.Empty);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+
+        private static void Click(VisualElement panel, string id)
+        {
+            var button = panel.Q<Button>(id);
+            Assert.That(button, Is.Not.Null, id);
+            Assert.That(button.enabledInHierarchy, Is.True, id);
+            using var submit = NavigationSubmitEvent.GetPooled();
+            submit.target = button;
+            button.SendEvent(submit);
         }
 
         [Test]
@@ -153,10 +261,17 @@ namespace GameForge.Tests.EditMode.Projects
         private ForgeProject StartProject()
         {
             var draft = service.Create();
+            DelegateRequiredQuestions(draft);
             draft.title = "Piste du soir";
             draft.idea = "Une course avec des obstacles lumineux.";
             service.StartQuestions(draft);
             return draft;
+        }
+
+        private static void DelegateRequiredQuestions(ForgeProject draft)
+        {
+            foreach (var prompt in ForgeBrief.Chapters.SelectMany(chapter => chapter.Prompts).Where(prompt => prompt.Required))
+                draft.brief.Set(prompt.Id, ForgeBrief.DelegateAnswer);
         }
 
         private static void AssertLockedPlayStyles(ForgeProject draft, string expectedPalette)
