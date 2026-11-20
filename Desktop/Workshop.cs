@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Speech.Recognition;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -140,7 +139,7 @@ namespace GameForge.Desktop
         private async Task Request(Func<CancellationToken,Task> run,string message)
         {
             if(busy)return;
-            StopVoice();busy=true;request=new CancellationTokenSource();
+            busy=true;request=new CancellationTokenSource();
             var cancel=Btn("Annuler",()=>request?.Cancel());var holder=(DockPanel)notice.Parent;
             DockPanel.SetDock(cancel,Dock.Bottom);holder.Children.Insert(0,cancel);
             body.IsEnabled=false;Status(message);
@@ -154,7 +153,7 @@ namespace GameForge.Desktop
             if(busy)return;
             var editor=studio.FindEditor();
             if(editor==null){Status("Unity "+StudioRuntime.UnityVersion+" est nécessaire pour créer la scène. Indique son emplacement dans Réglages.");return;}
-            StopVoice();busy=true;shell.IsEnabled=false;Status("Unity crée la scène en arrière-plan. Le premier import du moteur peut prendre plusieurs minutes.");
+            busy=true;shell.IsEnabled=false;Status("Unity crée la scène en arrière-plan. Le premier import du moteur peut prendre plusieurs minutes.");
             try{draft=await studio.Generate(editor,draft,i);Draw();}
             catch(Exception e){draft=Service.Read(draft.id);Draw();Status(e.GetBaseException().Message+"  "+studio.Log);}
             finally{busy=false;shell.IsEnabled=true;}
@@ -173,38 +172,15 @@ namespace GameForge.Desktop
         }
         private void VoiceButton(Panel panel,TextBox field)
         {
-            var windows=Btn("Dictée Windows · Win + H",()=>{
-                StopVoice();
+            var windows=Btn("Dicter avec Windows",()=>{
                 field.Focus();
                 System.Windows.Input.Keyboard.Focus(field);
-                Status("Champ prêt. Appuie sur Windows + H, puis attends « Écoute ». Choisis le français dans Windows. Internet est nécessaire et l’audio est traité par Microsoft. Arrête l’écoute depuis le panneau Windows avant de changer de champ.");
+                Status("Ouverture demandée à Windows. Attends « Écoute » dans son panneau. Choisis le français. Internet est nécessaire et l’audio est traité par Microsoft. Arrête l’écoute depuis ce panneau avant de changer de champ. Si le panneau n’apparaît pas, appuie sur Windows + H.");
+                if(!proof) Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input,
+                    new Action(()=>Safe(()=>WindowsDictation.Open(this,field))));
             },false,true);
-            windows.ToolTip="Prépare ce champ pour la saisie vocale Windows. Appuie ensuite sur Windows + H pour ouvrir son microphone.";
+            windows.ToolTip="Ouvre la saisie vocale Windows dans cette réponse. L’audio est traité par Microsoft. Raccourci de secours : Windows + H. Arrête l’écoute depuis le panneau Windows.";
             panel.Children.Add(windows);
-            var b=Btn("Dictée locale · expérimentale",()=>{},false,true);
-            b.ToolTip="Ancien moteur hors ligne. Sa précision peut être insuffisante ; la saisie vocale Windows est proposée à côté.";
-            b.Click+=(s,e)=>Safe(()=>{
-                bool same=ReferenceEquals(b,voiceButton);StopVoice();if(same)return;
-                var fr=SpeechRecognitionEngine.InstalledRecognizers().FirstOrDefault(r=>r.Culture.Name=="fr-FR");
-                if(fr==null)throw new InvalidOperationException("La dictée française est indisponible sur ce PC.");
-                var engine=new SpeechRecognitionEngine(fr);
-                try{engine.LoadGrammar(new DictationGrammar());engine.SetInputToDefaultAudioDevice();
-                    engine.SpeechRecognized+=(sender,eventArgs)=>Dispatcher.BeginInvoke(new Action(()=>{
-                        if(!ReferenceEquals(mic,engine))return;
-                        string value=(field.Text+" "+eventArgs.Result.Text).Trim();
-                        field.Text=value.Substring(0,Math.Min(field.MaxLength,value.Length));field.CaretIndex=field.Text.Length;
-                    }));
-                    engine.RecognizeCompleted+=(sender,args)=>Dispatcher.BeginInvoke(new Action(()=>{if(ReferenceEquals(mic,engine))StopVoice();}));
-                    engine.RecognizeAsync(RecognizeMode.Multiple);mic=engine;voiceButton=b;b.Content="Arrêter la dictée";micTimer.Start();}
-                catch{engine.Dispose();throw;}
-            });panel.Children.Add(b);
-        }
-        private Button voiceButton;
-        private void StopVoice()
-        {
-            micTimer.Stop();var old=mic;mic=null;
-            if(voiceButton!=null){voiceButton.Content="Dictée locale · expérimentale";voiceButton=null;}
-            if(old!=null){try{old.RecognizeAsyncCancel();}finally{old.Dispose();}}
         }
         private void Settings()
         {

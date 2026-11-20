@@ -20,10 +20,9 @@ try{
     [IO.Compression.ZipFileExtensions]::ExtractToFile($archive.GetEntry('LICENSE.md'),"$Out/Licences.txt",$true)
 }finally{$archive.Dispose()}
 $net="$env:windir/Microsoft.NET/Framework64/v4.0.30319"
-$voice=(Get-ChildItem "$env:windir/Microsoft.NET/assembly/GAC_MSIL/System.Speech" -Recurse -Filter System.Speech.dll | Select-Object -First 1).FullName
 $refs=@('mscorlib','System','System.Core','System.Xml','System.Net.Http','System.IO.Compression','System.IO.Compression.FileSystem','netstandard') | ForEach-Object {"$net/$_.dll"}
 $refs+=@('PresentationFramework','PresentationCore','WindowsBase','System.Xaml') | ForEach-Object { if(Test-Path "$net/WPF/$_.dll"){"$net/WPF/$_.dll"}else{"$net/$_.dll"} }
-$refs+=@($voice,"$Out/Newtonsoft.Json.dll")
+$refs+="$Out/Newtonsoft.Json.dll"
 $projectSources=@('ForgeProject','ForgeProjectStore','ForgeProjectService','ForgeProjectService.OmniRoute','ForgeBrief','ForgeBriefDesign','ForgeOmniRoute','ForgeLocalIdeas') | ForEach-Object {"$forge/Editor/Projects/$_.cs"}
 $projectSources+=@('RunnerConfigV1','RunnerContracts','RunnerConfigValidator') | ForEach-Object {"$forge/Runtime/Contracts/$_.cs"}
 $src=@(Get-ChildItem "$PSScriptRoot/*.cs" | Where-Object Name -ne 'Verification.cs' | ForEach-Object FullName)+$projectSources

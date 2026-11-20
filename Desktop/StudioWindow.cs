@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Speech.Recognition;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,7 +12,6 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using GameForge.Editor;
 
 namespace GameForge.Desktop
@@ -32,8 +30,6 @@ namespace GameForge.Desktop
         private Border pointerAura;
         private ScrollViewer contentScroll;
         private TextBlock notice;
-        private SpeechRecognitionEngine mic;
-        private readonly DispatcherTimer micTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
         private CancellationTokenSource request;
         private const string Prism = "Prisme";
         private string Bg => light ? "#F4F3FA" : "#11141D";
@@ -57,8 +53,7 @@ namespace GameForge.Desktop
             Title="GameForge AI"; Width=1230; Height=810; MinWidth=720; MinHeight=520;
             WindowStartupLocation=WindowStartupLocation.CenterScreen; FontFamily=new FontFamily("Segoe UI");
             UseLayoutRounding=true;
-            micTimer.Tick+=(s,e)=>StopVoice();
-            Closing+=(s,e)=>{ if(busy && request==null){ e.Cancel=true; Status("Unity termine la scène. Garde le Studio ouvert jusqu’à la fin."); } else {request?.Cancel(); StopVoice();} };
+            Closing+=(s,e)=>{ if(busy && request==null){ e.Cancel=true; Status("Unity termine la scène. Garde le Studio ouvert jusqu’à la fin."); } else {request?.Cancel();} };
             Draw();
         }
         private void Status(string value) { notice.Text=value; notice.Visibility=string.IsNullOrEmpty(value)?Visibility.Collapsed:Visibility.Visible; }
@@ -92,7 +87,6 @@ namespace GameForge.Desktop
         private void Go(string next){ if(busy) return; page=next; Draw(); }
         private void Draw()
         {
-            StopVoice();
             Background=B(Bg);
             if(!Resources.Contains("ButtonSkin"))
                 Resources["ButtonSkin"]=XamlReader.Parse(@"<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' TargetType='Button'><Border x:Name='surface' Background='{TemplateBinding Background}' BorderBrush='{TemplateBinding BorderBrush}' BorderThickness='{TemplateBinding BorderThickness}' CornerRadius='9' Padding='{TemplateBinding Padding}'><ContentPresenter HorizontalAlignment='{TemplateBinding HorizontalContentAlignment}' VerticalAlignment='Center' RecognizesAccessKey='True'/></Border><ControlTemplate.Triggers><Trigger Property='IsMouseOver' Value='True'><Setter TargetName='surface' Property='Opacity' Value='.82'/></Trigger><Trigger Property='IsKeyboardFocused' Value='True'><Setter TargetName='surface' Property='BorderBrush' Value='#B28AFF'/></Trigger><Trigger Property='IsEnabled' Value='False'><Setter TargetName='surface' Property='Opacity' Value='.5'/></Trigger></ControlTemplate.Triggers></ControlTemplate>");

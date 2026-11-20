@@ -75,10 +75,20 @@ namespace GameForge.Desktop
                     var voiceForm=new StackPanel();
                     var spoken=win.Input(voiceForm,"Réponse de test","Bonjour, mon jeu",100,true,v=>{});
                     win.VoiceButton(voiceForm,spoken);win.body.Children.Add(voiceForm);spoken.Select(9,3);
-                    voiceForm.Children.OfType<Button>().Single(b=>Equals(b.Content,"Dictée Windows · Win + H"))
+                    voiceForm.Children.OfType<Button>().Single(b=>Equals(b.Content,"Dicter avec Windows"))
                         .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                    if(spoken.Text!="Bonjour, mon jeu" || spoken.SelectionStart!=9 || spoken.SelectionLength!=3 || win.mic!=null ||
+                    if(spoken.Text!="Bonjour, mon jeu" || spoken.SelectionStart!=9 || spoken.SelectionLength!=3 ||
                         !win.notice.Text.Contains("Windows + H"))throw new Exception("La préparation vocale doit conserver la réponse sans ouvrir de micro");
+                    if(System.Runtime.InteropServices.Marshal.SizeOf<WindowsDictation.Input>()!=(IntPtr.Size==8?40:28))
+                        throw new Exception("Structure native INPUT incorrecte");
+                    var shortcut=WindowsDictation.Shortcut();
+                    if(shortcut.Length!=4 || shortcut.Any(k=>k.Type!=1) ||
+                        !shortcut.Select(k=>k.Data.Keyboard.Key).SequenceEqual(new ushort[]{0x5B,0x48,0x48,0x5B}) ||
+                        !shortcut.Select(k=>k.Data.Keyboard.Flags).SequenceEqual(new uint[]{0,0,2,2}))
+                        throw new Exception("Le raccourci vocal doit libérer les touches H et Windows");
+                    bool refused=false;
+                    try{WindowsDictation.Open(win,spoken);}catch(InvalidOperationException){refused=true;}
+                    if(!refused)throw new Exception("La dictée ne doit pas cibler une fenêtre de test sans focus");
                     foreach(var prompt in ForgeBrief.Chapters.SelectMany(c=>c.Prompts).Where(q=>q.Required)) p.brief.Set(prompt.Id,prompt.Example);
                     p.briefChapter=2;p.brief.SetLocked(ForgePromptId.Enemy,true);rt.Projects.Save(p);win.Draw();
                     win.Chapter(3);if(rt.Projects.Read(p.id).briefChapter!=3)throw new Exception("Reprise du chapitre");
