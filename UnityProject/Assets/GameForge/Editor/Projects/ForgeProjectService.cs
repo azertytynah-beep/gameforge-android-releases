@@ -5,7 +5,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using GameForge.Runtime;
+#if GAMEFORGE_DESKTOP
+using ForgePrefs = GameForge.Desktop.Preferences;
+using RunnerCatalog = GameForge.Desktop.DesktopCatalog;
+#else
+using ForgePrefs = UnityEditor.EditorPrefs;
 using UnityEngine;
+#endif
 
 namespace GameForge.Editor
 {
@@ -30,8 +36,8 @@ namespace GameForge.Editor
 
         public string Model
         {
-            get => UnityEditor.EditorPrefs.GetString(ModelKey, "");
-            set => UnityEditor.EditorPrefs.SetString(ModelKey, value?.Trim() ?? "");
+            get => ForgePrefs.GetString(ModelKey, "");
+            set => ForgePrefs.SetString(ModelKey, value?.Trim() ?? "");
         }
 
         public ForgeProject Create() => projects.Create();
@@ -136,8 +142,8 @@ namespace GameForge.Editor
                 if (!FixedPace(draft))
                 {
                     float nudge = new[] { 0f, -1.5f, 1f, 2f }[variation];
-                    play.initialSpeed = Mathf.Clamp(play.initialSpeed + nudge, 4f, 12f);
-                    play.maxSpeed = Mathf.Clamp(play.maxSpeed + nudge, play.initialSpeed, 18f);
+                    play.initialSpeed = Math.Min(12f, Math.Max(4f, play.initialSpeed + nudge));
+                    play.maxSpeed = Math.Min(18f, Math.Max(play.initialSpeed, play.maxSpeed + nudge));
                     if (play.objective == RunnerObjective.Sprint && FixedObjective(draft) &&
                         DistanceInTime(play) < play.goalDistance && DistanceInTime(look) >= look.goalDistance)
                     {
@@ -196,6 +202,7 @@ namespace GameForge.Editor
             _ => "Aller le plus loin possible."
         };
 
+#if !GAMEFORGE_DESKTOP
         public GenerationResult Generate(ForgeProject draft, int index)
         {
             RequireStage(draft, ForgeStage.Gameplay);
@@ -240,6 +247,7 @@ namespace GameForge.Editor
             return result;
         }
 
+#endif
         private static bool SameAppearance(RunnerConfigV1 look, RunnerConfigV1 play) =>
             look.themeId == play.themeId && look.skyColor == play.skyColor && look.trackColor == play.trackColor &&
             look.playerColor == play.playerColor && look.obstacleColor == play.obstacleColor && look.enemyDesign == play.enemyDesign;
@@ -269,7 +277,7 @@ namespace GameForge.Editor
         {
             if (config.acceleration <= 0f)
                 return config.initialSpeed * config.timeLimitSeconds;
-            float ramp = Mathf.Min(config.timeLimitSeconds, (config.maxSpeed - config.initialSpeed) / config.acceleration);
+            float ramp = Math.Min(config.timeLimitSeconds, (config.maxSpeed - config.initialSpeed) / config.acceleration);
             return ramp * (config.initialSpeed + config.acceleration * ramp / 2f) +
                 (config.timeLimitSeconds - ramp) * config.maxSpeed;
         }
@@ -294,8 +302,17 @@ namespace GameForge.Editor
         }
 
         private static bool Locked(ForgeProject draft, ForgeLocks choice) => (draft.locks & choice) != 0;
-        private static string Hex(float hue, float saturation, float value) =>
-            "#" + ColorUtility.ToHtmlStringRGB(Color.HSVToRGB(Mathf.Repeat(hue, 1f), saturation, value));
+        private static string Hex(float hue, float saturation, float value)
+        {
+            double sector = (hue - Math.Floor(hue)) * 6;
+            string Channel(int offset)
+            {
+                double k = (sector + offset) % 6;
+                double amount = Math.Max(0, Math.Min(1, Math.Min(k, 4 - k)));
+                return ((int)Math.Round(255 * value * (1 - saturation * amount))).ToString("X2");
+            }
+            return "#" + Channel(5) + Channel(3) + Channel(1);
+        }
 
         private static int Seed(int seed, string text)
         {

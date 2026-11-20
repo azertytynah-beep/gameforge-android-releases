@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GameForge.Runtime;
-using UnityEngine;
 
 namespace GameForge.Editor
 {
@@ -96,7 +95,7 @@ namespace GameForge.Editor
         private static int Measure(string value, string unit, int fallback, int min, int max)
         {
             var match = Regex.Match(value, @"\b(\d{1,5})\s*(?:" + unit + @")\b");
-            return match.Success && int.TryParse(match.Groups[1].Value, out int parsed) ? Mathf.Clamp(parsed, min, max) : fallback;
+            return match.Success && int.TryParse(match.Groups[1].Value, out int parsed) ? Math.Max(min, Math.Min(max, parsed)) : fallback;
         }
 
         private static bool NoEnemies(ForgeBrief brief)

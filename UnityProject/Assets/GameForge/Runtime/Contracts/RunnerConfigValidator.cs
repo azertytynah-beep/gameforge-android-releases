@@ -76,6 +76,7 @@ namespace GameForge.Runtime
             return errors;
         }
 
+#if !GAMEFORGE_DESKTOP
         public static bool TryCreateSettings(RunnerConfigV1 config, IRunnerCatalog catalog,
             out RunnerSettings settings, out IReadOnlyList<RunnerDiagnostic> diagnostics)
         {
@@ -84,6 +85,7 @@ namespace GameForge.Runtime
             return settings != null;
         }
 
+#endif
         private static bool Within(float value, float min, float max) => value >= min && value <= max;
 
         private static bool IsCatalogId(string value) => value != null && value.Length <= 48 && CatalogId.IsMatch(value);

@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text;
 using GameForge.Runtime;
 using Newtonsoft.Json;
+#if !GAMEFORGE_DESKTOP
 using UnityEngine;
+#endif
 
 namespace GameForge.Editor
 {
@@ -18,7 +20,9 @@ namespace GameForge.Editor
         private static readonly UTF8Encoding Utf8 = new UTF8Encoding(false, true);
         private readonly string root;
 
+#if !GAMEFORGE_DESKTOP
         public ForgeProjectStore() : this(Path.Combine(Application.dataPath, "..", "..", ".local", "projects")) { }
+#endif
 
         internal ForgeProjectStore(string root)
         {
@@ -93,7 +97,11 @@ namespace GameForge.Editor
 
             var destination = ProjectPath(draft.id);
             Validate(draft, draft.id);
+#if GAMEFORGE_DESKTOP
+            var bytes = Utf8.GetBytes(JsonConvert.SerializeObject(draft, Formatting.Indented));
+#else
             var bytes = Utf8.GetBytes(JsonUtility.ToJson(draft, prettyPrint: true));
+#endif
             if (bytes.Length > MaxFileBytes)
                 throw new InvalidDataException("Le projet GameForge dépasse la taille autorisée.");
 
@@ -170,7 +178,7 @@ namespace GameForge.Editor
             if ((hasVariant && (!IsId(draft.variantId) || draft.stage < ForgeStage.Gameplay || draft.chosenPlay < 0)) ||
                 hasScene != (draft.stage == ForgeStage.Complete) ||
                 (hasScene && (!hasVariant ||
-                    draft.scenePath != $"{GenerationStore.GeneratedRoot}/{draft.variantId}/{GenerationStore.SceneFile}")))
+                    draft.scenePath != $"Assets/GameForgeGenerated/{draft.variantId}/Runner.unity")))
                 throw new InvalidDataException("La variante associée au projet GameForge est invalide.");
         }
 

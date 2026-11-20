@@ -99,7 +99,7 @@ namespace GameForge.Editor
             }
         }
 
-        private static Uri ResolveEndpoint(string baseUrl)
+        internal static Uri ResolveEndpoint(string baseUrl)
         {
             if (string.IsNullOrWhiteSpace(baseUrl) || baseUrl.Length > 2048 || baseUrl.Any(char.IsControl) ||
                 !Uri.TryCreate(baseUrl.Trim(), UriKind.Absolute, out var root) ||

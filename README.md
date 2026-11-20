@@ -1,5 +1,15 @@
 # GameForge AI
 
+## Studio Windows
+
+Le Studio prépare le jeu dans une application Windows autonome. **Commencer à créer un jeu** ouvre un brouillon. Le questionnaire, la dictée, les quatre apparences et les quatre gameplays fonctionnent depuis cette fenêtre. **Créer ce jeu avec Unity** démarre Unity 6.3 LTS en arrière-plan. Le résultat propose **Jouer sur PC** et **Exporter l’APK de test**.
+
+Compare les ambiances **Orbital** et **Relief**, disponibles en clair et en sombre. Après extraction du dépôt, ouvre [la galerie des quatre maquettes](Desktop/Apercus/index.html) dans ton navigateur. Le réglage **Réduire les animations** immobilise les fonds du Studio.
+
+Les nouveaux jeux sont conservés dans le dossier `GameForge AI/Atelier` des données locales de l’utilisateur Windows. **Réglages → Importer un ancien brouillon** copie un projet de l’atelier Unity. Une scène déjà générée peut être recréée depuis le gameplay importé.
+
+Le MSI reste en validation. Une mise en quarantaine par Malwarebytes lors de l’essai sur Windows empêche pour le moment sa distribution. Les sources du Studio et les maquettes sont disponibles dans `Desktop/`.
+
 ## Installer le test Android
 
 1. Sur le Redmi, [télécharge le ZIP du Runner](https://github.com/azertytynah-beep/gameforge-android-releases/releases/latest/download/gameforge-runner-android.zip).

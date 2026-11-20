@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GameForge AI · Maquettes du Studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111018;color:#faf8ff;font:16px/1.5 "Segoe UI",sans-serif}main{max-width:1260px;margin:auto;padding:22px clamp(12px,3vw,40px)}
+header,nav,fieldset{display:flex;align-items:center;gap:8px;flex-wrap:wrap}header{justify-content:space-between;margin-bottom:16px}h1{font-size:clamp(21px,3vw,30px);margin:0}fieldset{border:0;padding:0;margin:0}legend{position:absolute;width:1px;height:1px;overflow:hidden}button{background:#211f2b;color:inherit;font:inherit;border:1px solid #534e63;border-radius:10px;padding:7px 12px;cursor:pointer}button[aria-pressed=true]{background:#d7ccff;color:#241e32}button:focus-visible{outline:3px solid #aebeff;outline-offset:2px}
+figure{margin:0}.screen{position:relative;border:1px solid #494652;border-radius:15px;overflow:hidden;box-shadow:0 12px 40px #0005}.screen img{width:100%;height:auto;display:block}.drift{position:absolute;inset:0;pointer-events:none;clip-path:inset(7% 3% 61.5% 53% round 8px);mask-image:linear-gradient(90deg,transparent 52%,black 65%,black 94%,transparent 98%)}.drift img{animation:drift 10s ease-in-out infinite alternate}@keyframes drift{from{transform:translateX(-.32%)}to{transform:translateX(.32%)}}
+.paused .drift img{animation:none}@media(prefers-reduced-motion:reduce){.drift img{animation:none}}
+figcaption{color:#c7c2d4;margin:12px 0}
+</style>
+<main><header><h1>Maquettes du Studio</h1><nav aria-label="Apparence de la maquette"><fieldset><legend>Direction artistique</legend><button data-design="Orbital" aria-pressed="true">Orbital</button><button data-design="Relief" aria-pressed="false">Relief</button></fieldset><fieldset><legend>Thème</legend><button data-theme="sombre" aria-pressed="true">Sombre</button><button data-theme="clair" aria-pressed="false">Clair</button></fieldset><button id="motion" aria-pressed="false">Réduire le mouvement</button></nav></header>
+<figure><div class="screen"><img id="base" src="Orbital-sombre.png" width="1200" height="764" alt="Accueil de GameForge AI en ambiance Orbital et thème sombre"><div class="drift" aria-hidden="true"><img src="Orbital-sombre.png" width="1200" height="764" alt=""></div></div><figcaption aria-live="polite">Orbital · Une planète gravée, des anneaux lumineux et un fond violet.</figcaption></figure></main>
+<script>
+let design='Orbital',theme='sombre';
+const buttons=document.querySelectorAll('button[data-design],button[data-theme]');
+function update(){
+ const file=design+'-'+theme+'.png';
+ document.querySelectorAll('.screen img').forEach(image=>image.src=file);
+ document.querySelector('#base').alt='Accueil de GameForge AI en ambiance '+design+' et thème '+theme;
+ document.querySelector('figcaption').textContent=design==='Orbital'?'Orbital · Une planète gravée, des anneaux lumineux et un fond violet.':'Relief · Un soleil pâle, des collines en strates et une lumière ambrée.';
+ buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.design===design||b.dataset.theme===theme)));
+}
+buttons.forEach(b=>b.addEventListener('click',()=>{design=b.dataset.design||design;theme=b.dataset.theme||theme;update()}));
+document.querySelector('#motion').onclick=e=>{const stopped=document.body.classList.toggle('paused');e.currentTarget.setAttribute('aria-pressed',String(stopped));};
+</script></html>
