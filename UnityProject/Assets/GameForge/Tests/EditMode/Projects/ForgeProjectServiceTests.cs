@@ -105,10 +105,12 @@ namespace GameForge.Tests.EditMode.Projects
             draft.brief.Set(ForgePromptId.Progression, "Un début tranquille.");
             draft.brief.SetLocked(ForgePromptId.Progression, true);
             draft.briefChapter = 2;
+            draft.briefQuestion = 2;
             service.Save(draft);
 
             draft = service.Read(draft.id);
             Assert.That(draft.briefChapter, Is.EqualTo(2));
+            Assert.That(draft.briefQuestion, Is.EqualTo(2));
             Assert.That(draft.brief.Get(ForgePromptId.Enemy), Is.EqualTo("Un drone vert à deux rotors."));
             Assert.That(draft.brief.IsLocked(ForgePromptId.Enemy), Is.True);
             service.ProposeLooks(draft);
@@ -159,11 +161,14 @@ namespace GameForge.Tests.EditMode.Projects
                 Assert.That(panel.Q<Button>("forge-project-brief-Enemy-microphone"), Is.Not.Null);
 
                 var saved = service.List().Single();
+                saved.briefQuestion = 3;
+                service.Save(saved);
                 panel.ShowProjects();
                 Click(panel, "forge-project-resume-" + saved.id);
                 Assert.That(panel.Q<TextField>("forge-project-brief-Enemy").value, Is.EqualTo(drone));
                 Assert.That(panel.Q<Toggle>("forge-project-brief-lock-Enemy").value, Is.True);
                 Click(panel, "forge-project-next-chapter");
+                Assert.That(service.Read(saved.id).briefQuestion, Is.Zero);
                 Click(panel, "forge-project-brief-delegate-Goal");
                 Click(panel, "forge-project-next-chapter");
                 Click(panel, "forge-project-propose-looks");

@@ -418,7 +418,7 @@ namespace GameForge.Editor
         {
             if (project.briefChapter != index)
             {
-                Save(() => project.briefChapter = index);
+                Save(() => { project.briefChapter = index; project.briefQuestion = 0; });
                 page.scrollOffset = Vector2.zero;
                 ShowStage();
             }

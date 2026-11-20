@@ -42,6 +42,7 @@ namespace GameForge.Editor
         public ForgeLocks locks;
         public ForgeBrief brief = new ForgeBrief();
         public int briefChapter;
+        public int briefQuestion;
         public RunnerConfigV1 answers = RunnerConfigV1.CreateDefault();
         public ForgeProposal[] looks;
         public ForgeProposal[] playStyles;

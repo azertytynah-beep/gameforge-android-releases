@@ -2,6 +2,8 @@
 
 Analyse du 20 novembre 2026. Proposition à valider avant modification du formulaire ou des données des projets. Les questions ci-dessous sont une synthèse de conception GameForge, les sources officielles étayent les exigences Android et Google Play citées.
 
+La disposition **Focus** est maintenant choisie et intégrée au Studio Windows. Elle présente une question à la fois et enregistre la position exacte dans le brief. Les 17 questions actuelles sont conservées. Le noyau et les branches détaillés ci-dessous restent une proposition d'évolution du contenu, distincte de ce choix visuel.
+
 Le bon objectif est un brief assez précis pour produire puis tester une première version jouable. Le nombre de réponses ne garantit ni la qualité du jeu ni son acceptation sur Google Play. Android distingue la valeur pour le joueur, l'expérience, la qualité technique et la sécurité. Le questionnaire doit préparer ces quatre dimensions. [Qualité Android](https://developer.android.com/quality)
 
 ## État des 17 questions actuelles

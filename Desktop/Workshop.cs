@@ -16,9 +16,9 @@ namespace GameForge.Desktop
 {
     internal sealed partial class StudioWindow
     {
-        private TextBox Input(StackPanel panel,string label,string value,int limit,bool multi,Action<string> changed)
+        private TextBox Input(StackPanel panel,string label,string value,int limit,bool multi,Action<string> changed,double labelSize=16)
         {
-            var name=Text(label,16,Fg,true);name.Margin=Gap(8,5);panel.Children.Add(name);
+            var name=Text(label,labelSize,Fg,true);name.Margin=Gap(8,5);panel.Children.Add(name);
             var field=new TextBox{Text=value??"",MaxLength=limit,AcceptsReturn=multi,TextWrapping=TextWrapping.Wrap,
                 MinHeight=multi?62:36,Padding=new Thickness(9,7,9,7),FontSize=15,Background=B(Bg),Foreground=B(Fg),
                 CaretBrush=B(Fg),BorderBrush=B(Edge),BorderThickness=new Thickness(1),VerticalScrollBarVisibility=ScrollBarVisibility.Hidden};
@@ -66,31 +66,7 @@ namespace GameForge.Desktop
                 foreach(var option in ideas.Ideas){var b=Btn(option,()=>{field.Text=option;});b.Margin=Gap(3);body.Children.Add(b);}
             },"Recherche d’idées…");
         }
-        private void Questions()
-        {
-            var chapters=ForgeBrief.Chapters;var c=draft.briefChapter;
-            var tabs=new WrapPanel{Margin=Gap(0,10)};
-            for(int i=0;i<chapters.Length;i++){
-                int pos=i;var b=Btn(chapters[i].Title,()=>Chapter(pos),i==c);b.Padding=new Thickness(10,6,10,6);b.Margin=new Thickness(0,0,4,4);tabs.Children.Add(b);
-            }
-            body.Children.Add(tabs);
-            foreach(var prompt in chapters[c].Prompts){
-                var fields=new StackPanel();
-                var field=Input(fields,prompt.Question+(prompt.Required?" *":""),draft.brief.Get(prompt.Id),ForgeBrief.AnswerLimit,true,v=>{draft.brief.Set(prompt.Id,v);Service.Save(draft);});
-                var example=Text("Ex. "+prompt.Example,13,Muted);example.Margin=Gap(4);fields.Children.Add(example);
-                var actions=new WrapPanel{Margin=Gap(4)};VoiceButton(actions,field);
-                var delegateBtn=Btn("Laisser GameForge proposer",()=>field.Text=ForgeBrief.DelegateAnswer,false,true);
-                actions.Children.Add(delegateBtn);
-                var keep=new CheckBox{Content="Verrouiller ce choix",VerticalAlignment=VerticalAlignment.Center,Foreground=B(Fg),
-                    IsChecked=draft.brief.IsLocked(prompt.Id),Margin=new Thickness(9,0,0,0)};
-                keep.Click+=(s,e)=>Safe(()=>{draft.brief.SetLocked(prompt.Id,keep.IsChecked==true);Service.Save(draft);});actions.Children.Add(keep);
-                fields.Children.Add(actions);var card=Card(fields,13);card.Margin=Gap(0,7);body.Children.Add(card);
-            }
-            var back=Btn(c==0?"Revoir mon idée":"←  Précédent",()=>{if(c==0)Back(ForgeStage.Idea);else Chapter(c-1);});
-            if(c<chapters.Length-1)Actions(back,Btn("Chapitre suivant  →",()=>Chapter(c+1),true));
-            else Actions(back,Btn("Voir les quatre apparences",()=>{Service.ProposeLooks(draft);Draw();},true),AiButton(true,false));
-        }
-        private void Chapter(int i){draft.briefChapter=i;Service.Save(draft);Draw();}
+        private void Chapter(int i){Question(i,0);}
         private void Back(ForgeStage to)
         {
             if(!string.IsNullOrEmpty(draft.variantId))throw new InvalidOperationException("Reprends la génération en cours.");

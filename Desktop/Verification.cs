@@ -12,20 +12,27 @@ namespace GameForge.Desktop
 {
     internal sealed partial class StudioWindow
     {
-        internal void Photograph(string folder,string style,bool bright)
+        internal void Photograph(string folder,string style,bool bright,bool questionnaire=false,int width=1200)
         {
-            design=style;light=bright;page="Accueil";Draw();SizeToContent=SizeToContent.Manual;
-            var size=new Size(1200,764);shell.Measure(size);shell.Arrange(new Rect(size));shell.UpdateLayout();
-            var bmp=new RenderTargetBitmap(1200,764,96,96,PixelFormats.Pbgra32);
+            design=style;light=bright;page=questionnaire?"Atelier":"Accueil";Draw();SizeToContent=SizeToContent.Manual;
+            var size=new Size(width,764);shell.Measure(size);shell.Arrange(new Rect(size));shell.UpdateLayout();
+            if(questionnaire && width<1000){
+                var next=NamedButton(shell,"Continuer →")??throw new Exception("Navigation Focus absente");
+                next.BringIntoView();shell.UpdateLayout();
+                var bounds=next.TransformToAncestor(contentScroll).TransformBounds(new Rect(next.RenderSize));
+                if(bounds.Top<0 || bounds.Bottom>contentScroll.ViewportHeight+1)throw new Exception("Navigation Focus inaccessible après défilement");
+                contentScroll.ScrollToTop();shell.UpdateLayout();
+            }
+            var bmp=new RenderTargetBitmap(width,764,96,96,PixelFormats.Pbgra32);
             bmp.Render(shell);
             var png=new PngBitmapEncoder();png.Frames.Add(BitmapFrame.Create(bmp));
-            using var target=File.Create(Path.Combine(folder,style+(bright?"-clair":"-sombre")+".png"));png.Save(target);
+            using var target=File.Create(Path.Combine(folder,(questionnaire?"Focus":style)+(bright?"-clair":"-sombre")+(width<1000?"-compact":"")+".png"));png.Save(target);
         }
-        private static Button CreationButton(DependencyObject parent)
+        private static Button NamedButton(DependencyObject parent,string name)
         {
-            if(parent is Button button && AutomationProperties.GetName(button)=="Créer un jeu")return button;
+            if(parent is Button button && (AutomationProperties.GetName(button)==name || Equals(button.Content,name)))return button;
             for(int i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++){
-                var match=CreationButton(VisualTreeHelper.GetChild(parent,i));
+                var match=NamedButton(VisualTreeHelper.GetChild(parent,i),name);
                 if(match!=null)return match;
             }
             return null;
@@ -52,7 +59,7 @@ namespace GameForge.Desktop
                     }
                     if(win.design!=Prism || win.nav.Orientation!=Orientation.Horizontal)throw new Exception("Accueil Prisme attendu");
                     win.Photograph(root,Prism,false);
-                    var create=CreationButton(win.shell)??throw new Exception("Bouton de création absent");
+                    var create=NamedButton(win.shell,"Créer un jeu")??throw new Exception("Bouton de création absent");
                     create.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                     var p=win.draft??throw new Exception("Le bouton doit créer un brouillon");
                     p.title="Les jardins de Minuit";p.idea="Guider un renard entre les ruines.";rt.Projects.Save(p);
@@ -89,9 +96,45 @@ namespace GameForge.Desktop
                     bool refused=false;
                     try{WindowsDictation.Open(win,spoken);}catch(InvalidOperationException){refused=true;}
                     if(!refused)throw new Exception("La dictée ne doit pas cibler une fenêtre de test sans focus");
+                    win.focusAnswer.Text="Guider un renard entre les ruines.";win.MoveQuestion(1);
+                    if(p.briefQuestion!=1 || rt.Projects.Read(p.id).briefQuestion!=1)throw new Exception("Question suivante non sauvegardée");
+                    win.focusAnswer.Text="Un renard turquoise avec un sac carré.";
+                    win.draft=rt.Projects.Read(p.id);win.Draw();p=win.draft;
+                    if(win.focusAnswer.Text!="Un renard turquoise avec un sac carré." ||
+                        AutomationProperties.GetName(win.focusAnswer)!=ForgeBrief.Chapters[0].Prompts[1].Question)
+                        throw new Exception("La reprise doit retrouver la question exacte et sa réponse");
+                    win.MoveQuestion(-1);
+                    if(win.focusAnswer.Text!="Guider un renard entre les ruines.")throw new Exception("Réponse précédente perdue");
+                    win.Question(2,3);win.MoveQuestion(1);
+                    if(p.briefChapter!=3 || p.briefQuestion!=0)throw new Exception("Passage entre chapitres incorrect");
+                    win.MoveQuestion(-1);
+                    if(p.briefChapter!=2 || p.briefQuestion!=3)throw new Exception("Retour entre chapitres incorrect");
+                    win.Question(4,1);win.FinishQuestions();
+                    if(p.briefChapter!=1 || p.briefQuestion!=0 || p.stage!=ForgeStage.Questions)
+                        throw new Exception("Le brief incomplet doit ouvrir la première question requise manquante");
+                    foreach(int invalid in new[]{-1,ForgeBrief.Chapters[1].Prompts.Count}){
+                        p.briefQuestion=invalid;bool rejected=false;
+                        try{rt.Projects.Save(p);}catch(InvalidDataException){rejected=true;}
+                        if(!rejected)throw new Exception("Curseur de question invalide accepté");
+                    }
+                    p=rt.Projects.Read(p.id);win.draft=p;
+                    var legacy=rt.Projects.Create();var legacyPath=Path.Combine(root,".local","projects",legacy.id+".json");
+                    var json=Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(legacyPath));json.Remove("briefQuestion");
+                    File.WriteAllText(legacyPath,json.ToString());
+                    if(rt.Projects.Read(legacy.id).briefQuestion!=0)throw new Exception("Ancien brouillon incompatible");
+                    for(int chapter=0;chapter<ForgeBrief.Chapters.Length;chapter++)
+                        for(int question=0;question<ForgeBrief.Chapters[chapter].Prompts.Count;question++){
+                            win.Question(chapter,question);
+                            if(AutomationProperties.GetName(win.focusAnswer)!=ForgeBrief.Chapters[chapter].Prompts[question].Question)
+                                throw new Exception("Question Focus manquante ou incorrecte");
+                        }
                     foreach(var prompt in ForgeBrief.Chapters.SelectMany(c=>c.Prompts).Where(q=>q.Required)) p.brief.Set(prompt.Id,prompt.Example);
-                    p.briefChapter=2;p.brief.SetLocked(ForgePromptId.Enemy,true);rt.Projects.Save(p);win.Draw();
-                    win.Chapter(3);if(rt.Projects.Read(p.id).briefChapter!=3)throw new Exception("Reprise du chapitre");
+                    p.briefChapter=2;p.briefQuestion=0;p.brief.SetLocked(ForgePromptId.Enemy,true);rt.Projects.Save(p);win.Draw();
+                    foreach(bool bright in new[]{false,true})win.Photograph(root,Prism,bright,true);
+                    win.Photograph(root,Prism,false,true,720);
+                    win.Question(2,3);win.Chapter(4);
+                    if(rt.Projects.Read(p.id).briefChapter!=4 || rt.Projects.Read(p.id).briefQuestion!=0 || !p.brief.IsLocked(ForgePromptId.Enemy))
+                        throw new Exception("Changement de chapitre ou conservation des verrous incorrect");
                     rt.Projects.ProposeLooks(p);rt.Projects.ProposeLooks(p,true);
                     if(p.looks.Length!=4||p.lookRound!=1)throw new Exception("Série d’apparences");
                     rt.Projects.ChooseLook(p,1);rt.Projects.RegenerateGameplay(p);win.Draw();
@@ -99,7 +142,7 @@ namespace GameForge.Desktop
                     if(Directory.Exists(rt.EngineProject))throw new Exception("Moteur préparé avant la génération");
                     var q2=rt.Projects.Create();q2.title="Traversée d’ambre";rt.Projects.Save(q2);
                     foreach(string style in new[]{Prism,"Orbital","Relief"}) foreach(bool bright in new[]{false,true})win.Photograph(root,style,bright);
-                    Console.WriteLine("Accueil Prisme, aura sans interception, réduction des mouvements, défilement masqué, création, sauvegarde, reprise, 4+4 propositions et six rendus vérifiés. Micro non activé.");return 0;
+                    Console.WriteLine("Focus : 17 questions, navigation, reprise exacte, anciens brouillons, verrous et réponses requises vérifiés. Accueil, aura, défilement, 4+4 propositions et neuf rendus vérifiés. Micro non activé.");return 0;
                 }catch(Exception e){Console.Error.WriteLine(e);return 1;}
             }
         }

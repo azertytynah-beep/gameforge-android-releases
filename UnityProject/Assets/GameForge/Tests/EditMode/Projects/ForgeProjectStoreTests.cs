@@ -116,8 +116,24 @@ namespace GameForge.Tests.EditMode.Projects
             var legacy = projects.Single(item => item.id == legacyId);
             Assert.That(legacy.stage, Is.EqualTo(ForgeStage.Idea));
             Assert.That(legacy.chosenLook, Is.EqualTo(-1));
+            Assert.That(legacy.briefQuestion, Is.EqualTo(0));
             Assert.That(legacy.answers.obstacleIds, Is.Not.Empty);
             Assert.Throws<InvalidDataException>(() => store.Read(damagedId));
+        }
+
+        [TestCase(-1)]
+        [TestCase(2)]
+        public void InvalidQuestionDoesNotOverwriteTheDraft(int question)
+        {
+            var draft = store.Create();
+            draft.briefChapter = 4;
+            draft.briefQuestion = 1;
+            store.Save(draft);
+            draft.briefQuestion = question;
+            Assert.Throws<InvalidDataException>(() => store.Save(draft));
+            var saved = store.Read(draft.id);
+            Assert.That(saved.briefChapter, Is.EqualTo(4));
+            Assert.That(saved.briefQuestion, Is.EqualTo(1));
         }
     }
 }

@@ -159,7 +159,8 @@ namespace GameForge.Editor
             if (draft == null || draft.schemaVersion != 1 || draft.id != id ||
                 !Enum.IsDefined(typeof(ForgeStage), draft.stage) || !Enum.IsDefined(typeof(ForgeStart), draft.start) ||
                 (draft.locks & ~AllowedLocks) != 0 || draft.lookRound < 0 || draft.playRound < 0 ||
-                draft.briefChapter < 0 || draft.briefChapter >= ForgeBrief.Chapters.Length)
+                draft.briefChapter < 0 || draft.briefChapter >= ForgeBrief.Chapters.Length ||
+                draft.briefQuestion < 0 || draft.briefQuestion >= ForgeBrief.Chapters[draft.briefChapter].Prompts.Count)
                 throw new InvalidDataException("Le format du projet GameForge est invalide ou incompatible.");
 
             ValidateText(draft.title, RunnerConfigValidator.MaxTitleLength);
