@@ -1,8 +1,24 @@
-param([string]$Build=(Join-Path (Split-Path $PSScriptRoot) '.local\025\build'))
+param([string]$Build=(Join-Path (Split-Path $PSScriptRoot) '.local\025\build'), [switch]$Portable)
 $ErrorActionPreference='Stop'
 # Utilise les outils Windows Installer et makecab présents sur Windows.
 $dir=[IO.Path]::GetFullPath($Build)
 $files=[ordered]@{StudioExe='GameForge AI.exe';JsonDll='Newtonsoft.Json.dll';TemplateZip='modele.zip';Catalogue='catalogue.txt';Licence='Licences.txt'}
+foreach($name in $files.Values){if(!(Test-Path -LiteralPath (Join-Path $dir $name) -PathType Leaf)){throw "Fichier manquant : $name"}}
+if($Portable){
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $output=Join-Path $dir 'GameForge-AI-Studio-Windows.zip'
+    $zip=[IO.Compression.ZipFile]::Open($output,[IO.Compression.ZipArchiveMode]::Create)
+    try{
+        foreach($name in $files.Values){
+            $null=[IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,(Join-Path $dir $name),"GameForge AI/$name")
+        }
+        $null=[IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,"$PSScriptRoot/Portable.txt",'GameForge AI/Lisez-moi.txt')
+    }finally{$zip.Dispose()}
+    $hash=(Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash.ToLowerInvariant()
+    [IO.File]::WriteAllText("$output.sha256","$hash  $([IO.Path]::GetFileName($output))`n")
+    Write-Output $output
+    return
+}
 $work=Join-Path (Split-Path $dir) ('msi-'+[Guid]::NewGuid().ToString('N'))
 $null=New-Item $work -ItemType Directory
 $ddf=@('.OPTION EXPLICIT','.Set CabinetNameTemplate=studio.cab','.Set Cabinet=on','.Set Compress=on','.Set CompressionType=MSZIP','.Set DiskDirectoryTemplate=.')

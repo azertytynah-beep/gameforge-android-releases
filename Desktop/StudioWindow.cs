@@ -29,6 +29,8 @@ namespace GameForge.Desktop
         private string page = "Accueil";
         private StackPanel body, nav;
         private Grid shell;
+        private Border pointerAura;
+        private ScrollViewer contentScroll;
         private TextBlock notice;
         private SpeechRecognitionEngine mic;
         private readonly DispatcherTimer micTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
@@ -77,7 +79,10 @@ namespace GameForge.Desktop
                 BorderThickness=new Thickness(1),HorizontalContentAlignment=HorizontalAlignment.Center,
                 VerticalContentAlignment=VerticalAlignment.Center,Cursor=System.Windows.Input.Cursors.Hand,
                 Template=(ControlTemplate)Resources["ButtonSkin"]};
-            b.Click+=(s,e)=>Safe(action); return b;
+            b.Click+=(s,e)=>Safe(action);
+            b.MouseMove+=(s,e)=>MoveAura(e.GetPosition(shell));
+            b.MouseLeave+=(s,e)=>MoveAura(null);
+            return b;
         }
         private Border Card(UIElement child,double pad=18)
         {
@@ -116,13 +121,31 @@ namespace GameForge.Desktop
             foreach(var destination in new[]{"Accueil","Mes projets","Ambiances","Réglages"}) Nav(destination);
             var right=new DockPanel{Margin=new Thickness(30,6,30,22)}; Grid.SetRow(right,1); shell.Children.Add(right);
             notice=Text("",14,Accent,true); notice.Margin=Gap(8); DockPanel.SetDock(notice,Dock.Bottom); right.Children.Add(notice); Status("");
-            body=new StackPanel{MaxWidth=1240}; var scroll=new ScrollViewer{Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled}; right.Children.Add(scroll);
+            body=new StackPanel{MaxWidth=1240};
+            contentScroll=new ScrollViewer{Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Hidden,
+                HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,PanningMode=PanningMode.VerticalOnly};
+            AutomationProperties.SetName(contentScroll,"Contenu du Studio · défilement à la molette ou au clavier");
+            right.Children.Add(contentScroll);
             Content=shell;
             if(page=="Accueil") Home();
             else if(page=="Ambiances") Styles();
             else if(page=="Mes projets") {Heading("Mes projets"); ListProjects(false); }
             else if(page=="Réglages") Settings();
             else Workshop();
+            pointerAura=new Border{Width=180,Height=180,IsHitTestVisible=false,Visibility=Visibility.Collapsed,
+                HorizontalAlignment=HorizontalAlignment.Left,VerticalAlignment=VerticalAlignment.Top,
+                Background=new RadialGradientBrush(WorldArt.ColorOf(light?"#184D3E91":"#24CEFFEA"),Colors.Transparent),
+                RenderTransform=new TranslateTransform()};
+            Grid.SetRowSpan(pointerAura,2);shell.Children.Add(pointerAura);
+        }
+        private void MoveAura(Point? point)
+        {
+            if(pointerAura==null)return;
+            bool visible=point.HasValue && !still && SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast;
+            pointerAura.Visibility=visible?Visibility.Visible:Visibility.Collapsed;
+            if(!visible)return;
+            var move=(TranslateTransform)pointerAura.RenderTransform;
+            move.X=point.Value.X-pointerAura.Width/2;move.Y=point.Value.Y-pointerAura.Height/2;
         }
         private void Nav(string dest)
         {

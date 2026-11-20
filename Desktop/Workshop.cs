@@ -22,7 +22,7 @@ namespace GameForge.Desktop
             var name=Text(label,16,Fg,true);name.Margin=Gap(8,5);panel.Children.Add(name);
             var field=new TextBox{Text=value??"",MaxLength=limit,AcceptsReturn=multi,TextWrapping=TextWrapping.Wrap,
                 MinHeight=multi?62:36,Padding=new Thickness(9,7,9,7),FontSize=15,Background=B(Bg),Foreground=B(Fg),
-                CaretBrush=B(Fg),BorderBrush=B(Edge),BorderThickness=new Thickness(1),VerticalScrollBarVisibility=ScrollBarVisibility.Auto};
+                CaretBrush=B(Fg),BorderBrush=B(Edge),BorderThickness=new Thickness(1),VerticalScrollBarVisibility=ScrollBarVisibility.Hidden};
             AutomationProperties.SetName(field,label);field.TextChanged+=(s,e)=>Safe(()=>changed(field.Text));panel.Children.Add(field);return field;
         }
         private void Actions(params Button[] buttons)
@@ -33,7 +33,8 @@ namespace GameForge.Desktop
         private void Workshop()
         {
             Heading(draft.DisplayTitle);
-            var step=Text(Stage(draft)+"   ·   "+((int)draft.stage+1)+" / 5",14,Accent,true);
+            var position=draft.stage==ForgeStage.Questions ? "Chapitre "+(draft.briefChapter+1)+" / "+ForgeBrief.Chapters.Length : "Étape "+((int)draft.stage+1)+" / 5";
+            var step=Text(Stage(draft)+"   ·   "+position,14,Accent,true);
             step.Margin=Gap(0,12);body.Children.Add(step);
             switch(draft.stage){
                 case ForgeStage.Idea: Idea(); break;
@@ -172,7 +173,16 @@ namespace GameForge.Desktop
         }
         private void VoiceButton(Panel panel,TextBox field)
         {
-            var b=Btn("Dicter en français",()=>{},false,true);
+            var windows=Btn("Dictée Windows · Win + H",()=>{
+                StopVoice();
+                field.Focus();
+                System.Windows.Input.Keyboard.Focus(field);
+                Status("Champ prêt. Appuie sur Windows + H, puis attends « Écoute ». Choisis le français dans Windows. Internet est nécessaire et l’audio est traité par Microsoft. Arrête l’écoute depuis le panneau Windows avant de changer de champ.");
+            },false,true);
+            windows.ToolTip="Prépare ce champ pour la saisie vocale Windows. Appuie ensuite sur Windows + H pour ouvrir son microphone.";
+            panel.Children.Add(windows);
+            var b=Btn("Dictée locale · expérimentale",()=>{},false,true);
+            b.ToolTip="Ancien moteur hors ligne. Sa précision peut être insuffisante ; la saisie vocale Windows est proposée à côté.";
             b.Click+=(s,e)=>Safe(()=>{
                 bool same=ReferenceEquals(b,voiceButton);StopVoice();if(same)return;
                 var fr=SpeechRecognitionEngine.InstalledRecognizers().FirstOrDefault(r=>r.Culture.Name=="fr-FR");
@@ -193,7 +203,7 @@ namespace GameForge.Desktop
         private void StopVoice()
         {
             micTimer.Stop();var old=mic;mic=null;
-            if(voiceButton!=null){voiceButton.Content="Dicter en français";voiceButton=null;}
+            if(voiceButton!=null){voiceButton.Content="Dictée locale · expérimentale";voiceButton=null;}
             if(old!=null){try{old.RecognizeAsyncCancel();}finally{old.Dispose();}}
         }
         private void Settings()

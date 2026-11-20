@@ -57,6 +57,28 @@ namespace GameForge.Desktop
                     var p=win.draft??throw new Exception("Le bouton doit créer un brouillon");
                     p.title="Les jardins de Minuit";p.idea="Guider un renard entre les ruines.";rt.Projects.Save(p);
                     rt.Projects.StartQuestions(p);
+                    win.page="Atelier";win.Draw();
+                    win.shell.Measure(new Size(1000,540));win.shell.Arrange(new Rect(0,0,1000,540));win.shell.UpdateLayout();
+                    if(win.contentScroll.VerticalScrollBarVisibility!=ScrollBarVisibility.Hidden || win.contentScroll.ScrollableHeight<=0)
+                        throw new Exception("Le questionnaire doit rester défilable sans barre visible");
+                    win.contentScroll.ScrollToEnd();win.shell.UpdateLayout();
+                    if(win.contentScroll.VerticalOffset<=0)throw new Exception("Le défilement est bloqué");
+                    win.still=false;win.MoveAura(new Point(210,180));
+                    bool canAnimate=SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast;
+                    if(canAnimate && win.pointerAura.Visibility!=Visibility.Visible)
+                        throw new Exception("Aura absente au survol");
+                    if(win.pointerAura.IsHitTestVisible || (canAnimate && ((TranslateTransform)win.pointerAura.RenderTransform).X!=120))
+                        throw new Exception("Aura mal placée ou interception des clics");
+                    if(!canAnimate && win.pointerAura.Visibility!=Visibility.Collapsed)throw new Exception("Confort système ignoré");
+                    win.still=true;win.MoveAura(new Point(210,180));
+                    if(win.pointerAura.Visibility!=Visibility.Collapsed)throw new Exception("Réduction des mouvements ignorée");
+                    var voiceForm=new StackPanel();
+                    var spoken=win.Input(voiceForm,"Réponse de test","Bonjour, mon jeu",100,true,v=>{});
+                    win.VoiceButton(voiceForm,spoken);win.body.Children.Add(voiceForm);spoken.Select(9,3);
+                    voiceForm.Children.OfType<Button>().Single(b=>Equals(b.Content,"Dictée Windows · Win + H"))
+                        .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    if(spoken.Text!="Bonjour, mon jeu" || spoken.SelectionStart!=9 || spoken.SelectionLength!=3 || win.mic!=null ||
+                        !win.notice.Text.Contains("Windows + H"))throw new Exception("La préparation vocale doit conserver la réponse sans ouvrir de micro");
                     foreach(var prompt in ForgeBrief.Chapters.SelectMany(c=>c.Prompts).Where(q=>q.Required)) p.brief.Set(prompt.Id,prompt.Example);
                     p.briefChapter=2;p.brief.SetLocked(ForgePromptId.Enemy,true);rt.Projects.Save(p);win.Draw();
                     win.Chapter(3);if(rt.Projects.Read(p.id).briefChapter!=3)throw new Exception("Reprise du chapitre");
@@ -67,7 +89,7 @@ namespace GameForge.Desktop
                     if(Directory.Exists(rt.EngineProject))throw new Exception("Moteur préparé avant la génération");
                     var q2=rt.Projects.Create();q2.title="Traversée d’ambre";rt.Projects.Save(q2);
                     foreach(string style in new[]{Prism,"Orbital","Relief"}) foreach(bool bright in new[]{false,true})win.Photograph(root,style,bright);
-                    Console.WriteLine("Accueil Prisme, création, sauvegarde, questionnaire, reprise, 4+4 propositions et six rendus vérifiés.");return 0;
+                    Console.WriteLine("Accueil Prisme, aura sans interception, réduction des mouvements, défilement masqué, création, sauvegarde, reprise, 4+4 propositions et six rendus vérifiés. Micro non activé.");return 0;
                 }catch(Exception e){Console.Error.WriteLine(e);return 1;}
             }
         }

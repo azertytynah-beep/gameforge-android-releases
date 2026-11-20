@@ -6,9 +6,13 @@ Le Studio prépare le jeu dans une application Windows autonome. **Commencer à 
 
 **Prisme** est l’accueil par défaut du Studio. La navigation se trouve en haut, **Créer un jeu** ouvre le brief et les projets récents sont accessibles sous la sculpture irisée. Le menu **Ambiances** conserve Orbital et Relief et permet de réduire les animations. [Rendu clair](Desktop/Apercus/Prisme-clair.png) · [Rendu sombre](Desktop/Apercus/Prisme-sombre.png)
 
+Une aura discrète accompagne le survol des boutons et des onglets. Elle respecte la réduction des animations et le contraste élevé. La barre de défilement est masquée ; le contenu reste défilable. [Comparer les trois maquettes du questionnaire](Desktop/Apercus/questionnaires.html), en clair et sombre. Ces maquettes illustrent le futur questionnaire, leur micro est une démonstration sans enregistrement.
+
+**Dictée Windows · Win + H** prépare le champ sans enregistrer : appuie ensuite sur **Windows + H** pour utiliser la saisie vocale de Windows 11. Elle nécessite Internet, traite l'audio chez Microsoft et utilise la langue de saisie Windows. Arrête-la depuis son panneau avant de changer de champ. L'ancienne dictée locale reste explicitement expérimentale après le signalement de transcriptions erronées. La précision du nouveau parcours doit être essayée avec le micro de l'utilisateur. [Fonctionnement de la saisie vocale Windows](https://support.microsoft.com/fr-fr/accessibility/windows/use-voice-typing-to-talk-instead-of-type-on-your-pc)
+
 Les nouveaux jeux sont conservés dans le dossier `GameForge AI/Atelier` des données locales de l’utilisateur Windows. **Réglages → Importer un ancien brouillon** copie un projet de l’atelier Unity. Une scène déjà générée peut être recréée depuis le gameplay importé.
 
-Le MSI reste en validation. Une mise en quarantaine par Malwarebytes lors de l’essai sur Windows empêche pour le moment sa distribution. Les sources du Studio et les maquettes sont disponibles dans `Desktop/`.
+Le MSI et le ZIP portable restent en validation. Le lancement de l'exécutable Prisme extrait du ZIP a reproduit une mise en quarantaine Malwarebytes. La cause est en attente d'analyse. Les sources du Studio et les maquettes sont disponibles dans `Desktop/`. La commande `Desktop/Package.ps1 -Build <dossier_compilé> -Portable` prépare le ZIP avec les cinq fichiers nécessaires et sa notice. Cette archive ne constitue pas encore une livraison validée.
 
 ## Installer le test Android
 

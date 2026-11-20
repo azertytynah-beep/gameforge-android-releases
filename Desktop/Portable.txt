@@ -1,0 +1,36 @@
+GAMEFORGE AI STUDIO — VERSION DE TEST WINDOWS
+
+1. Clic droit sur le ZIP, puis « Extraire tout ».
+2. Ouvre le dossier « GameForge AI » extrait.
+3. Double-clique sur « GameForge AI.exe ».
+
+Conserve tous les fichiers de ce dossier ensemble. Le programme ne doit pas
+être lancé directement depuis l'archive. Aucune installation n'est nécessaire.
+Le dashboard et le questionnaire fonctionnent sans ouvrir Unity.
+Windows 11 avec .NET Framework 4.8 est requis pour cette version.
+
+Tes projets sont enregistrés dans les données locales de ton compte Windows,
+sous GameForge AI/Atelier. Extraire une nouvelle version dans un autre dossier
+préserve ces projets. Le dossier de l'application ne contient pas tes projets.
+
+Prisme est le thème initial. « Ambiances » permet de changer de thème et de
+réduire les animations. Les thèmes clair et sombre sont disponibles.
+
+Pour générer ou compiler un jeu, Unity 6000.3.28f1 doit être installé et activé.
+Les modules Android de cette version sont nécessaires pour exporter un APK.
+Le Studio utilise Unity en arrière-plan après ta confirmation.
+
+Cette version crée des variantes du Runner 3D. Les idées et maquettes locales
+reposent sur des règles. OmniRoute nécessite une passerelle, un modèle et,
+si nécessaire, une clé à configurer. Aucun abonnement payant n'est inclus.
+
+LANCEMENT EN ATTENTE DE VALIDATION ANTIVIRUS
+Le programme n'est pas signé numériquement. Cette version a été mise en
+quarantaine au démarrage par Malwarebytes avec « MachineLearning/Anomalous.97% ».
+La cause reste à confirmer. Conserve l'archive en attendant cette vérification.
+Les instructions de lancement ci-dessus s'appliqueront après résolution.
+Ne désactive pas ta protection et n'ajoute pas d'exclusion pour contourner
+cette alerte.
+
+Sources et suivi
+https://github.com/azertytynah-beep/gameforge-android-releases
